@@ -2,13 +2,13 @@ import { Logger } from '@map-colonies/js-logger';
 import { inject, injectable } from 'tsyringe';
 import { IConfig } from 'config';
 import httpStatus from 'http-status-codes';
-import cron, { schedule } from 'node-cron';
+import cron from 'node-cron';
 import { IFindJobsRequest, IJobResponse, IUpdateJobBody, JobManagerClient, OperationStatus } from '@map-colonies/mc-priority-queue';
+import axios from 'axios';
+import { I3DCatalogUpsertRequestBody } from '@map-colonies/mc-model-types';
 import { SERVICES } from '../common/constants';
 import { AppError } from '../common/appError';
 import { IJobParameters, ITaskParameters } from '../common/interfaces';
-import { I3DCatalogUpsertRequestBody } from '@map-colonies/mc-model-types';
-import axios from 'axios';
 
 @injectable()
 export class JobSyncerManager {
@@ -34,7 +34,7 @@ export class JobSyncerManager {
     
   };
   
-  public async progressJobs(): Promise<void> {
+  private async progressJobs(): Promise<void> {
     console.log('Running cron job');
     const jobs = await this.getInProgressJobs(false);
       jobs?.map(async (job) => {
@@ -61,7 +61,7 @@ export class JobSyncerManager {
       });
   }
 
-  public async getInProgressJobs(shouldReturnTasks = false): Promise<IJobResponse<IJobParameters, ITaskParameters>[] | undefined> {
+  private async getInProgressJobs(shouldReturnTasks = false): Promise<IJobResponse<IJobParameters, ITaskParameters>[] | undefined> {
     const queryParams: IFindJobsRequest = {
       isCleaned: false,
       type: this.jobType,
@@ -77,7 +77,7 @@ export class JobSyncerManager {
     }
   }
 
-  public async finalizeJob(jobParameters: IJobParameters): Promise<void> {
+  private async finalizeJob(jobParameters: IJobParameters): Promise<void> {
     const nginxUrl = this.config.get<string>('nginx.url');
     const metadata: I3DCatalogUpsertRequestBody = {
       ...jobParameters.metadata,
