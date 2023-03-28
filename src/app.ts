@@ -1,37 +1,17 @@
 import { Logger } from '@map-colonies/js-logger';
 import { inject, singleton } from 'tsyringe';
-import yargs from 'yargs/yargs';
-import { hideBin } from 'yargs/helpers';
-import { Argv } from 'yargs';
 import { SERVICES } from './common/constants';
-import { SayCommand } from './sayCommand/sayCommand';
 import { registerExternalValues, RegisterOptions } from './containerConfig';
-import { HelloWorldCommand } from './helloWorldCommand/helloWorldCommand';
+import { JobSyncerManager } from './jobSyncerManager/jobSyncer';
 
 @singleton()
 export class App {
-  public cli: Argv;
+  public constructor(@inject(SERVICES.LOGGER) private readonly logger: Logger, 
+  @inject(SERVICES.JOB_SYNCER_MANAGER)  private readonly jobSyncerManager: JobSyncerManager) {}
 
-  public constructor(
-    @inject(SERVICES.LOGGER) private readonly logger: Logger,
-    private readonly sayCommand: SayCommand,
-    private readonly helloWorldCommand: HelloWorldCommand
-  ) {
-    this.cli = this.createYargsCli();
-  }
-
-  public async run(args: string[]): Promise<void> {
-    await Promise.resolve(this.cli.parse(hideBin(args)));
-  }
-
-  private createYargsCli(): Argv {
-    return yargs()
-      .usage('Usage: $0 <command> [options]')
-      .command(this.helloWorldCommand)
-      .command(this.sayCommand)
-      .help('h')
-      .alias('h', 'help')
-      .strict();
+  public run(): void {
+    this.logger.info({ msg: 'Starting worker' });
+    this.jobSyncerManager.scheduleCronJob();
   }
 }
 

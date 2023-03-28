@@ -10,6 +10,7 @@ import { SERVICES, SERVICE_NAME } from './common/constants';
 import { tracing } from './common/tracing';
 import { InjectionObject, registerDependencies } from './common/dependencyRegistration';
 import { JobManagerConfig } from './common/interfaces';
+import { JobSyncerManager } from './jobSyncerManager/jobSyncer';
 
 export interface RegisterOptions {
   override?: InjectionObject<unknown>[];
@@ -20,7 +21,7 @@ export const registerExternalValues = (options?: RegisterOptions): DependencyCon
   const loggerConfig = config.get<LoggerOptions>('telemetry.logger');
   // @ts-expect-error the signature is wrong
   const logger = jsLogger({ ...loggerConfig, prettyPrint: loggerConfig.prettyPrint, hooks: { logMethod } });
-  const jobManager: JobManagerConfig = config.get<JobManagerConfig>('jobManager');
+  const jobConfig: JobManagerConfig = config.get<JobManagerConfig>('jobManager');
 
   const metrics = new Metrics(SERVICE_NAME);
   const meter = metrics.start();
@@ -34,7 +35,8 @@ export const registerExternalValues = (options?: RegisterOptions): DependencyCon
     { token: SERVICES.TRACER, provider: { useValue: tracer } },
     { token: SERVICES.METER, provider: { useValue: meter } },
     { token: SERVICES.METRICS, provider: { useValue: metrics } },
-    { token: SERVICES.JOB_MANAGER_CLIENT, provider: { useClass: JobManagerClient, deps: [logger, jobManager.url, jobManager.jobType] } as ClassProvider<JobManagerClient> }
+    { token: SERVICES.JOB_MANAGER_CLIENT, provider: { useFactory: () => new JobManagerClient(logger, jobConfig.jobType, jobConfig.url) } },
+    { token: SERVICES.JOB_SYNCER_MANAGER, provider: { useClass: JobSyncerManager } }
   ];
 
   return registerDependencies(dependencies, options?.override, options?.useChild);

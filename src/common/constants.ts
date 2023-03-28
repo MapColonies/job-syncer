@@ -14,5 +14,6 @@ export const SERVICES: Record<string, symbol> = {
   METER: Symbol('Meter'),
   METRICS: Symbol('Metrics'),
   JOB_MANAGER_CLIENT: Symbol('JobManagerClient'),
+  JOB_SYNCER_MANAGER: Symbol('JobSyncerManager'),
 };
 /* eslint-enable @typescript-eslint/naming-convention */
