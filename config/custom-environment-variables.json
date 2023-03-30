@@ -21,7 +21,7 @@
     }
   },
   "jobManager": {
-    "url": "JOB_SYNCER_MANAGER_URL",
+    "url": "JOB_MANAGER_URL",
     "jobType": "JOB_TYPE"
   },
   "catalog": {
