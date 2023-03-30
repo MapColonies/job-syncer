@@ -1,56 +1,44 @@
 import cron from 'node-cron';
 import { container } from 'tsyringe';
 import { getApp } from '../../../src/app';
+import { AppError } from '../../../src/common/appError';
 import { JobSyncerManager } from '../../../src/jobSyncerManager/jobSyncer';
 
 describe('jobSyncerManager', () => {
     let jobSyncerManager: JobSyncerManager;
     beforeAll(() => {
         getApp();
-
         jobSyncerManager = container.resolve(JobSyncerManager);
     });
 
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
     describe('scheduleCronJob', () => {
-        const scheduleTime = '* * * * *';
         const jobSyncerManagerMock = {
             progressJobs: jest.fn(),
         };
         const cronMock = {
             validate: jest.fn(),
             schedule: jest.fn(),
-        }
-        // let appErrorConstructor: jest.Mock;
+        };
+        
+        it('Should schedule a cron job to call progressJobs', () => {
+          cronMock.validate.mockReturnValue(true);
+          cronMock.schedule.mockImplementationOnce(() => jobSyncerManagerMock.progressJobs.mockReturnThis());
       
-        // beforeEach(() => {
-        //   appErrorConstructor = jest.fn();
-        // });
-      
-
-        afterEach(() => {
-          jest.restoreAllMocks();
+          jobSyncerManager.scheduleCronJob();
+          
+          expect(jobSyncerManagerMock.progressJobs).toHaveBeenCalled();
         });
-      
-        it('should throw an error if the cron expression is not valid', () => {
-          cronMock.mockReturnValue(false);
 
+        it('should throw an error when the cron expression is not valid', () => {
+          cronMock.validate.mockReturnValue(false);
 
           const response = jobSyncerManager.scheduleCronJob();
       
-          expect(() => {
-            scheduleCronJob(scheduleTime, progressJobs, appErrorConstructor);
-          }).toThrowErrorMatchingSnapshot();
-        });
-      
-        it('should schedule a cron job to call progressJobs', () => {
-          jest.spyOn(cron, 'validate').mockReturnValue(true);
-          const scheduleSpy = jest.spyOn(cron, 'schedule').mockReturnValue({
-            start: jest.fn(),
-          });
-      
-          scheduleCronJob(scheduleTime, progressJobs, appErrorConstructor);
-      
-          expect(scheduleSpy).toHaveBeenCalledWith(scheduleTime, expect.any(Function));
+          expect(response).toThrow(AppError);
         });
       });
 
