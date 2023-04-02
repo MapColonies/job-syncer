@@ -13,11 +13,11 @@ cloudProvider:
   flavor: openshift
 
 image:
-  repository: ts-script-boilerplate
+  repository: 3d-job-syncer
   tag: 'latest'
 
 cron:
-  schedule:  '* * * * * *'
+  schedule:  '* * * * *'
   successfulJobsHistoryLimit: 1
   failedJobsHistoryLimit: 3
   concurrencyPolicy: Forbid
