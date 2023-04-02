@@ -1,45 +1,33 @@
-import cron from 'node-cron';
 import { container } from 'tsyringe';
 import { getApp } from '../../../src/app';
-import { AppError } from '../../../src/common/appError';
+import { SERVICES } from '../../../src/common/constants';
 import { JobSyncerManager } from '../../../src/jobSyncerManager/jobSyncer';
+import { jobManagerClientMock } from '../../mocks/jobManagerMock';
 
 describe('jobSyncerManager', () => {
-    let jobSyncerManager: JobSyncerManager;
-    beforeAll(() => {
-        getApp();
-        jobSyncerManager = container.resolve(JobSyncerManager);
+  let jobSyncerManager: JobSyncerManager;
+
+  beforeAll(() => {
+    getApp({
+      override: [{ token: SERVICES.JOB_MANAGER_CLIENT, provider: { useValue: jobManagerClientMock } }],
     });
 
-    afterEach(() => {
-      jest.restoreAllMocks();
+    jobSyncerManager = container.resolve(JobSyncerManager);
+  });
+
+  afterAll(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('progressJobs', () => {
+    it('When calling progressJobs it should update all the in progress jobs and update the catalog service', async () => {
+      jobManagerClientMock.getJobs.mockResolvedValueOnce([]);
+      jobManagerClientMock.updateJob.mockResolvedValue(undefined);
+
+      await jobSyncerManager.progressJobs();
+
+      expect(jobManagerClientMock.getJobs).toHaveBeenCalledTimes(1);
+      expect(jobManagerClientMock.updateJob).toHaveBeenCalledTimes(0);
     });
-
-    describe('scheduleCronJob', () => {
-        const jobSyncerManagerMock = {
-            progressJobs: jest.fn(),
-        };
-        const cronMock = {
-            validate: jest.fn(),
-            schedule: jest.fn(),
-        };
-        
-        it('Should schedule a cron job to call progressJobs', () => {
-          cronMock.validate.mockReturnValue(true);
-          cronMock.schedule.mockImplementationOnce(() => jobSyncerManagerMock.progressJobs.mockReturnThis());
-      
-          jobSyncerManager.scheduleCronJob();
-          
-          expect(jobSyncerManagerMock.progressJobs).toHaveBeenCalled();
-        });
-
-        it('should throw an error when the cron expression is not valid', () => {
-          cronMock.validate.mockReturnValue(false);
-
-          const response = jobSyncerManager.scheduleCronJob();
-      
-          expect(response).toThrow(AppError);
-        });
-      });
-
+  });
 });

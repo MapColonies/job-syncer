@@ -1,7 +1,6 @@
 import { Logger } from '@map-colonies/js-logger';
 import { I3DCatalogUpsertRequestBody } from '@map-colonies/mc-model-types';
 import { IFindJobsRequest, IJobResponse, IUpdateJobBody, JobManagerClient, OperationStatus } from '@map-colonies/mc-priority-queue';
-import axios from 'axios';
 import { IConfig } from 'config';
 import httpStatus from 'http-status-codes';
 import { inject, injectable } from 'tsyringe';
@@ -79,8 +78,15 @@ export class JobSyncerManager {
       ],
     };
 
+    const requestOptions = {
+      method: 'POST',
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(metadata)
+    }
+
     try {
-      await axios.post<string>(`${this.catalogUrl}/metadata`, metadata);
+      await fetch(`${this.catalogUrl}/metadata`, requestOptions);
     } catch (err) {
       this.logger.error({ msg: err });
       throw new AppError('', httpStatus.INTERNAL_SERVER_ERROR, `Problem with calling to the catalog while finalizing`, true);
