@@ -12,6 +12,7 @@ import { IJobParameters, ITaskParameters } from '../common/interfaces';
 export class JobSyncerManager {
   private readonly jobType: string;
   private readonly catalogUrl: string;
+  private readonly nginxUrl: string;
 
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
@@ -20,6 +21,7 @@ export class JobSyncerManager {
   ) {
     this.jobType = config.get<string>('jobManager.jobType');
     this.catalogUrl = config.get<string>('catalog.url');
+    this.nginxUrl = this.config.get<string>('nginx.url');
   }
 
   public async progressJobs(): Promise<void> {
@@ -34,7 +36,7 @@ export class JobSyncerManager {
       if (job.taskCount == job.completedTasks) {
         payload.status = OperationStatus.COMPLETED;
         try {
-          await this.finalizeJob(job.parameters);
+          await this.updateCatalogMetadata(job.parameters);
         } catch (err) {
           payload.status = OperationStatus.FAILED;
           payload.reason = 'Problem with the catalog service';
@@ -45,7 +47,7 @@ export class JobSyncerManager {
         await this.jobManagerClient.updateJob<IJobParameters>(job.id, payload);
       } catch (err) {
         this.logger.error({ msg: err });
-        throw new AppError('', httpStatus.INTERNAL_SERVER_ERROR, `Problem with jobManager.`, true);
+        throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, `Problem with jobManager.`, true);
       }
     };
   }
@@ -54,7 +56,7 @@ export class JobSyncerManager {
     const queryParams: IFindJobsRequest = {
       isCleaned: false,
       type: this.jobType,
-      shouldReturnTasks: shouldReturnTasks,
+      shouldReturnTasks,
       status: OperationStatus.IN_PROGRESS,
     };
     try {
@@ -62,18 +64,17 @@ export class JobSyncerManager {
       return jobs;
     } catch (err) {
       this.logger.error({ msg: err });
-      throw new AppError('', httpStatus.INTERNAL_SERVER_ERROR, `Problem with jobManager.`, true);
+      throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, `Problem with jobManager.`, true);
     }
   }
 
-  private async finalizeJob(jobParameters: IJobParameters): Promise<void> {
-    const nginxUrl = this.config.get<string>('nginx.url');
+  private async updateCatalogMetadata(jobParameters: IJobParameters): Promise<void> {
     const metadata: I3DCatalogUpsertRequestBody = {
       ...jobParameters.metadata,
       links: [
         {
           protocol: '3D_LAYER',
-          url: `${nginxUrl}/${jobParameters.modelId}/${jobParameters.tilesetFilename}`,
+          url: `${this.nginxUrl}/${jobParameters.modelId}/${jobParameters.tilesetFilename}`,
         },
       ],
     };
@@ -89,7 +90,7 @@ export class JobSyncerManager {
       await fetch(`${this.catalogUrl}/metadata`, requestOptions);
     } catch (err) {
       this.logger.error({ msg: err });
-      throw new AppError('', httpStatus.INTERNAL_SERVER_ERROR, `Problem with calling to the catalog while finalizing`, true);
+      throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, `Problem with calling to the catalog while finalizing`, true);
     }
   }
 }
