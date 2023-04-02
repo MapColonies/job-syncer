@@ -12,6 +12,7 @@ import { IJobParameters, ITaskParameters } from '../common/interfaces';
 @injectable()
 export class JobSyncerManager {
   private readonly jobType: string;
+  private readonly catalogUrl: string;
 
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
@@ -19,16 +20,18 @@ export class JobSyncerManager {
     @inject(SERVICES.JOB_MANAGER_CLIENT) private readonly jobManagerClient: JobManagerClient,
   ) {
     this.jobType = config.get<string>('jobManager.jobType');
+    this.catalogUrl = config.get<string>('catalog.url');
   }
 
   public async progressJobs(): Promise<void> {
-    console.log('Running cron job');
     const jobs = await this.getInProgressJobs(false);
-    jobs?.map(async (job) => {
+
+    for (const job of jobs) {
       const payload: IUpdateJobBody<IJobParameters> = {
         // eslint-disable-next-line @typescript-eslint/no-magic-numbers
         percentage: parseInt(((job.completedTasks / job.taskCount) * 100).toString()),
       };
+
       if (job.taskCount == job.completedTasks) {
         payload.status = OperationStatus.COMPLETED;
         try {
@@ -43,12 +46,12 @@ export class JobSyncerManager {
         await this.jobManagerClient.updateJob<IJobParameters>(job.id, payload);
       } catch (err) {
         this.logger.error({ msg: err });
-        throw new AppError('', httpStatus.INTERNAL_SERVER_ERROR, `Problem with jobManager. Didn't get job to work on`, true);
+        throw new AppError('', httpStatus.INTERNAL_SERVER_ERROR, `Problem with jobManager.`, true);
       }
-    });
+    };
   }
 
-  private async getInProgressJobs(shouldReturnTasks = false): Promise<IJobResponse<IJobParameters, ITaskParameters>[] | undefined> {
+  private async getInProgressJobs(shouldReturnTasks = false): Promise<IJobResponse<IJobParameters, ITaskParameters>[]> {
     const queryParams: IFindJobsRequest = {
       isCleaned: false,
       type: this.jobType,
@@ -60,7 +63,7 @@ export class JobSyncerManager {
       return jobs;
     } catch (err) {
       this.logger.error({ msg: err });
-      throw new AppError('', httpStatus.INTERNAL_SERVER_ERROR, `Problem with jobManager. Didn't get job to work on`, true);
+      throw new AppError('', httpStatus.INTERNAL_SERVER_ERROR, `Problem with jobManager.`, true);
     }
   }
 
@@ -75,9 +78,9 @@ export class JobSyncerManager {
         },
       ],
     };
-    const catalogUrl = this.config.get<string>('catalog.url');
+
     try {
-      await axios.post<string>(`${catalogUrl}/metadata`, metadata);
+      await axios.post<string>(`${this.catalogUrl}/metadata`, metadata);
     } catch (err) {
       this.logger.error({ msg: err });
       throw new AppError('', httpStatus.INTERNAL_SERVER_ERROR, `Problem with calling to the catalog while finalizing`, true);
