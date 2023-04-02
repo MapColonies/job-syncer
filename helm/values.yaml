@@ -17,7 +17,7 @@ image:
   tag: 'latest'
 
 cron:
-  schedule:  '0 0 * * *'
+  schedule:  '* * * * * *'
   successfulJobsHistoryLimit: 1
   failedJobsHistoryLimit: 3
   concurrencyPolicy: Forbid

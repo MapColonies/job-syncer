@@ -8,7 +8,7 @@ import { getApp } from './app';
 
 async function main(): Promise<void> {
   const app = getApp();
-  app.run();
+  await app.run();
 
   //stop tracing and metrics when app finish running
   const metrics = container.resolve<Metrics>(SERVICES.METRICS);

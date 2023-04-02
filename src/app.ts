@@ -6,12 +6,12 @@ import { JobSyncerManager } from './jobSyncerManager/jobSyncer';
 
 @singleton()
 export class App {
-  public constructor(@inject(SERVICES.LOGGER) private readonly logger: Logger, 
-  @inject(SERVICES.JOB_SYNCER_MANAGER)  private readonly jobSyncerManager: JobSyncerManager) {}
+  public constructor(@inject(SERVICES.LOGGER) private readonly logger: Logger,
+    @inject(SERVICES.JOB_SYNCER_MANAGER) private readonly jobSyncerManager: JobSyncerManager) { }
 
-  public run(): void {
+  public async run(): Promise<void> {
     this.logger.info({ msg: 'Starting worker' });
-    this.jobSyncerManager.scheduleCronJob();
+    await this.jobSyncerManager.progressJobs();
   }
 }
 

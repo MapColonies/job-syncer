@@ -1,18 +1,16 @@
 import { Logger } from '@map-colonies/js-logger';
-import { inject, injectable } from 'tsyringe';
-import { IConfig } from 'config';
-import httpStatus from 'http-status-codes';
-import cron from 'node-cron';
+import { I3DCatalogUpsertRequestBody } from '@map-colonies/mc-model-types';
 import { IFindJobsRequest, IJobResponse, IUpdateJobBody, JobManagerClient, OperationStatus } from '@map-colonies/mc-priority-queue';
 import axios from 'axios';
-import { I3DCatalogUpsertRequestBody } from '@map-colonies/mc-model-types';
-import { SERVICES } from '../common/constants';
+import { IConfig } from 'config';
+import httpStatus from 'http-status-codes';
+import { inject, injectable } from 'tsyringe';
 import { AppError } from '../common/appError';
+import { SERVICES } from '../common/constants';
 import { IJobParameters, ITaskParameters } from '../common/interfaces';
 
 @injectable()
 export class JobSyncerManager {
-  private readonly scheduleTime: string;
   private readonly jobType: string;
 
   public constructor(
@@ -21,19 +19,9 @@ export class JobSyncerManager {
     @inject(SERVICES.JOB_MANAGER_CLIENT) private readonly jobManagerClient: JobManagerClient,
   ) {
     this.jobType = config.get<string>('jobManager.jobType');
-    this.scheduleTime = config.get<string>('jobSyncer.scheduleTime');
   }
 
-  public scheduleCronJob(): void {
-    if (!cron.validate(this.scheduleTime)) {
-      throw new AppError('', httpStatus.INTERNAL_SERVER_ERROR, `the cron expression is not valid! value: ${this.scheduleTime}`, false);
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-misused-promises, @typescript-eslint/promise-function-async
-    cron.schedule(this.scheduleTime, () => this.progressJobs());
-  };
-
-  private async progressJobs(): Promise<void> {
+  public async progressJobs(): Promise<void> {
     console.log('Running cron job');
     const jobs = await this.getInProgressJobs(false);
     jobs?.map(async (job) => {
