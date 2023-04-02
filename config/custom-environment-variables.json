@@ -19,5 +19,18 @@
       "url": "TELEMETRY_METRICS_URL",
       "interval": "TELEMETRY_METRICS_INTERVAL"
     }
+  },
+  "jobManager": {
+    "url": "JOB_MANAGER_URL",
+    "jobType": "JOB_TYPE"
+  },
+  "catalog": {
+    "url": "CATALOG_URL"
+  },
+  "nginx": {
+    "url": "NGINX_URL"
+  },
+  "jobSyncer": {
+    "scheduleTime": "SCHEDULE_TIME"
   }
 }
