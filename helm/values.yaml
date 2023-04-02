@@ -8,13 +8,13 @@ enabled: true
 environment: development
 
 cloudProvider:
-  dockerRegistryUrl: my-registry-url.io
+  dockerRegistryUrl: acrarolibotnonprod.azurecr.io
   imagePullSecretName: 'my-registry-secret'
   flavor: openshift
 
 image:
   repository: 3d-job-syncer
-  tag: 'latest'
+  tag: 1.0.0
 
 cron:
   schedule:  '* * * * *'
