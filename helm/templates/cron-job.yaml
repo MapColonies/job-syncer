@@ -1,20 +1,20 @@
 {{- $releaseName := .Release.Name -}}
-{{- $chartName := include "ts-script-boilerplate.name" . -}}
-{{- $cloudProviderFlavor := include "ts-script-boilerplate.cloudProviderFlavor" . -}}
-{{- $cloudProviderDockerRegistryUrl := include "ts-script-boilerplate.cloudProviderDockerRegistryUrl" . -}}
-{{- $cloudProviderImagePullSecretName := include "ts-script-boilerplate.cloudProviderImagePullSecretName" . -}}
-{{- $imageTag := include "ts-server-boilerplate.tag" . -}}
+{{- $chartName := include "3d-job-syncer.name" . -}}
+{{- $cloudProviderFlavor := include "3d-job-syncer.cloudProviderFlavor" . -}}
+{{- $cloudProviderDockerRegistryUrl := include "3d-job-syncer.cloudProviderDockerRegistryUrl" . -}}
+{{- $cloudProviderImagePullSecretName := include "3d-job-syncer.cloudProviderImagePullSecretName" . -}}
+{{- $imageTag := include "3d-job-syncer.tag" . -}}
 {{- if .Values.enabled -}}
 apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
-  name: {{ $releaseName }}-{{ $chartName }}
+  name: {{ $releaseName }}-{{ $chartName }}-job-syncer
   labels:
     app: {{ $chartName }}
     component: {{ $chartName }}
-    environment: {{ include "ts-script-boilerplate.environment" . }}
+    environment: {{ include "3d-job-syncer.environment" . }}
     release: {{ $releaseName }}
-    {{- include "ts-script-boilerplate.labels" . | nindent 4 }}
+    {{- include "3d-job-syncer.labels" . | nindent 4 }}
 spec:
   schedule: {{ .Values.cron.schedule | quote }}
   successfulJobsHistoryLimit: {{ .Values.cron.successfulJobsHistoryLimit }}
