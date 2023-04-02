@@ -1,16 +1,8 @@
-# Map Colonies typescript script template
+# 3d Job Syncer
 
 ----------------------------------
 
-![badge-alerts-lgtm](https://img.shields.io/lgtm/alerts/github/MapColonies/ts-script-boilerplate?style=for-the-badge)
-
-![grade-badge-lgtm](https://img.shields.io/lgtm/grade/javascript/github/MapColonies/ts-script-boilerplate?style=for-the-badge)
-
-![snyk](https://img.shields.io/snyk/vulnerabilities/github/MapColonies/ts-script-boilerplate?style=for-the-badge)
-
-----------------------------------
-
-This is a basic repo template for building new MapColonies cli script or cron-job in Typescript.
+This script should run as cron job and update job to completed status and also update catalog metadata.
 
 ### Template Usage Notes:
 - the docker file contains default command to use when running container without additional parameters
