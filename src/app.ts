@@ -10,7 +10,7 @@ export class App {
     @inject(SERVICES.JOB_SYNCER_MANAGER) private readonly jobSyncerManager: JobSyncerManager) { }
 
   public async run(): Promise<void> {
-    this.logger.info({ msg: 'Starting worker' });
+    this.logger.info({ msg: 'Start job syncer !' });
     await this.jobSyncerManager.progressJobs();
   }
 }

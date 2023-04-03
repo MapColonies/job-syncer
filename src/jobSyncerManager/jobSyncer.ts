@@ -46,7 +46,9 @@ export class JobSyncerManager {
       }
 
       try {
+        this.logger.info({ msg: 'Starting updateJob' });
         await this.jobManagerClient.updateJob<IJobParameters>(job.id, payload);
+        this.logger.info({ msg: 'Done updateJob' });
       } catch (err) {
         this.logger.error({ msg: err });
         if (catalogMetadataId !== null) {
@@ -59,6 +61,7 @@ export class JobSyncerManager {
   }
 
   private async getInProgressJobs(shouldReturnTasks = false): Promise<IJobResponse<IJobParameters, ITaskParameters>[]> {
+    this.logger.info({ msg: 'Starting getInProgressJobs' });
     const queryParams: IFindJobsRequest = {
       isCleaned: false,
       type: this.jobType,
@@ -67,6 +70,7 @@ export class JobSyncerManager {
     };
     try {
       const jobs = await this.jobManagerClient.getJobs<IJobParameters, ITaskParameters>(queryParams);
+      this.logger.info({ msg: 'Done getInProgressJobs' });
       return jobs;
     } catch (err) {
       this.logger.error({ msg: err });
@@ -75,6 +79,7 @@ export class JobSyncerManager {
   }
 
   private async createCatalogMetadata(jobParameters: IJobParameters): Promise<string> {
+    this.logger.info({ msg: 'Starting createCatalogMetadata' });
     const metadata: I3DCatalogUpsertRequestBody = {
       ...jobParameters.metadata,
       links: [
@@ -97,6 +102,7 @@ export class JobSyncerManager {
       const catalogMetadata = await response.json() as Pycsw3DCatalogRecord;
 
       // It should never be undefined
+      this.logger.info({ msg: 'Done createCatalogMetadata' });
       return catalogMetadata.id as string;
     } catch (err) {
       this.logger.error({ msg: err });
