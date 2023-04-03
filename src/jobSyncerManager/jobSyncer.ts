@@ -1,5 +1,5 @@
 import { Logger } from '@map-colonies/js-logger';
-import { I3DCatalogUpsertRequestBody } from '@map-colonies/mc-model-types';
+import { I3DCatalogUpsertRequestBody, Pycsw3DCatalogRecord } from '@map-colonies/mc-model-types';
 import { IFindJobsRequest, IJobResponse, IUpdateJobBody, JobManagerClient, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { IConfig } from 'config';
 import httpStatus from 'http-status-codes';
@@ -33,10 +33,12 @@ export class JobSyncerManager {
         percentage: parseInt(((job.completedTasks / job.taskCount) * 100).toString()),
       };
 
-      if (job.taskCount == job.completedTasks) {
+      let catalogMetadataId: string | null = null;
+
+      if (job.taskCount === job.completedTasks) {
         payload.status = OperationStatus.COMPLETED;
         try {
-          await this.updateCatalogMetadata(job.parameters);
+          catalogMetadataId = await this.createCatalogMetadata(job.parameters);
         } catch (err) {
           payload.status = OperationStatus.FAILED;
           payload.reason = 'Problem with the catalog service';
@@ -47,6 +49,10 @@ export class JobSyncerManager {
         await this.jobManagerClient.updateJob<IJobParameters>(job.id, payload);
       } catch (err) {
         this.logger.error({ msg: err });
+        if (catalogMetadataId !== null) {
+          await this.deleteCatalogMetadata(catalogMetadataId);
+        }
+
         throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, `Problem with jobManager.`, true);
       }
     };
@@ -68,7 +74,7 @@ export class JobSyncerManager {
     }
   }
 
-  private async updateCatalogMetadata(jobParameters: IJobParameters): Promise<void> {
+  private async createCatalogMetadata(jobParameters: IJobParameters): Promise<string> {
     const metadata: I3DCatalogUpsertRequestBody = {
       ...jobParameters.metadata,
       links: [
@@ -87,10 +93,29 @@ export class JobSyncerManager {
     }
 
     try {
-      await fetch(`${this.catalogUrl}/metadata`, requestOptions);
+      const response: Response = await fetch(`${this.catalogUrl}/metadata`, requestOptions);
+      const catalogMetadata = await response.json() as Pycsw3DCatalogRecord;
+
+      // It should never be undefined
+      return catalogMetadata.id as string;
     } catch (err) {
       this.logger.error({ msg: err });
       throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, `Problem with calling to the catalog while finalizing`, true);
+    }
+  }
+
+  private async deleteCatalogMetadata(id: string): Promise<void> {
+    const requestOptions = {
+      method: 'DELETE',
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      headers: { 'Content-Type': 'application/json' }
+    }
+
+    try {
+      await fetch(`${this.catalogUrl}/metadata/${id}`, requestOptions);
+    } catch (err) {
+      this.logger.error({ msg: err });
+      throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, `Problem in delete catalog metadata`, false);
     }
   }
 }
