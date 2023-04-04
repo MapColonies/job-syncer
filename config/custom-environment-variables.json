@@ -29,8 +29,5 @@
   },
   "nginx": {
     "url": "NGINX_URL"
-  },
-  "jobSyncer": {
-    "scheduleTime": "SCHEDULE_TIME"
   }
 }
