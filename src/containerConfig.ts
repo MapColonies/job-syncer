@@ -9,6 +9,7 @@ import { InjectionObject, registerDependencies } from './common/dependencyRegist
 import { JobManagerConfig } from './jobSyncerManager/interfaces';
 import { tracing } from './common/tracing';
 import { JobSyncerManager } from './jobSyncerManager/jobSyncer';
+import { CatalogManager } from './catalogManager/catalogManager';
 
 export interface RegisterOptions {
   override?: InjectionObject<unknown>[];
@@ -34,7 +35,8 @@ export const registerExternalValues = (options?: RegisterOptions): DependencyCon
     { token: SERVICES.METER, provider: { useValue: meter } },
     { token: SERVICES.METRICS, provider: { useValue: metrics } },
     { token: SERVICES.JOB_MANAGER_CLIENT, provider: { useFactory: () => new JobManagerClient(logger, jobConfig.jobType, jobConfig.url) } },
-    { token: SERVICES.JOB_SYNCER_MANAGER, provider: { useClass: JobSyncerManager } }
+    { token: SERVICES.JOB_SYNCER_MANAGER, provider: { useClass: JobSyncerManager } },
+    { token: SERVICES.CATALOG_MANAGER, provider: { useClass: CatalogManager } }
   ];
 
   return registerDependencies(dependencies, options?.override, options?.useChild);

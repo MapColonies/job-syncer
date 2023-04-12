@@ -1,5 +1,5 @@
 import { IJobResponse } from "@map-colonies/mc-priority-queue";
-import { IJobParameters, ITaskParameters } from "../../src/common/interfaces";
+import { IJobParameters, ITaskParameters } from "../../src/jobSyncerManager/interfaces";
 
 export const jobManagerClientMock = {
   updateJob: jest.fn(),
