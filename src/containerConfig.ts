@@ -1,15 +1,13 @@
-import config from 'config';
-import { logMethod } from '@map-colonies/telemetry';
-import { trace } from '@opentelemetry/api';
-import { DependencyContainer } from 'tsyringe/dist/typings/types';
 import jsLogger, { LoggerOptions } from '@map-colonies/js-logger';
-import { Metrics } from '@map-colonies/telemetry';
-import { ClassProvider } from 'tsyringe';
 import { JobManagerClient } from '@map-colonies/mc-priority-queue';
+import { Metrics, logMethod } from '@map-colonies/telemetry';
+import { trace } from '@opentelemetry/api';
+import config from 'config';
+import { DependencyContainer } from 'tsyringe/dist/typings/types';
 import { SERVICES, SERVICE_NAME } from './common/constants';
-import { tracing } from './common/tracing';
 import { InjectionObject, registerDependencies } from './common/dependencyRegistration';
-import { JobManagerConfig } from './common/interfaces';
+import { JobManagerConfig } from './jobSyncerManager/interfaces';
+import { tracing } from './common/tracing';
 import { JobSyncerManager } from './jobSyncerManager/jobSyncer';
 
 export interface RegisterOptions {

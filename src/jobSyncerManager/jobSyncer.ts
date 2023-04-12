@@ -2,11 +2,9 @@ import { Logger } from '@map-colonies/js-logger';
 import { I3DCatalogUpsertRequestBody, Pycsw3DCatalogRecord } from '@map-colonies/mc-model-types';
 import { IFindJobsRequest, IJobResponse, IUpdateJobBody, JobManagerClient, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { IConfig } from 'config';
-import httpStatus from 'http-status-codes';
 import { inject, injectable } from 'tsyringe';
-import { AppError } from '../common/appError';
 import { SERVICES } from '../common/constants';
-import { IJobParameters, ITaskParameters } from '../common/interfaces';
+import { IJobParameters, ITaskParameters } from '../jobSyncerManager/interfaces';
 
 @injectable()
 export class JobSyncerManager {
@@ -19,12 +17,13 @@ export class JobSyncerManager {
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
     @inject(SERVICES.JOB_MANAGER_CLIENT) private readonly jobManagerClient: JobManagerClient,
   ) {
-    this.jobType = config.get<string>('jobManager.jobType');
-    this.catalogUrl = config.get<string>('catalog.url');
+    this.jobType = this.config.get<string>('jobManager.jobType');
+    this.catalogUrl = this.config.get<string>('catalog.url');
     this.nginxUrl = this.config.get<string>('nginx.url');
   }
 
   public async progressJobs(): Promise<void> {
+    this.logger.info({ msg: 'Start job syncer !' });
     const jobs = await this.getInProgressJobs(false);
 
     for (const job of jobs) {
@@ -33,9 +32,10 @@ export class JobSyncerManager {
         percentage: parseInt(((job.completedTasks / job.taskCount) * 100).toString()),
       };
 
-      let catalogMetadataId: string | null = null;
+      let catalogMetadataId: Pycsw3DCatalogRecord | null = null;
+      const isJobCompleted = job.taskCount === job.completedTasks;
 
-      if (job.taskCount === job.completedTasks) {
+      if (isJobCompleted) {
         payload.status = OperationStatus.COMPLETED;
         try {
           catalogMetadataId = await this.createCatalogMetadata(job.parameters);
@@ -49,37 +49,32 @@ export class JobSyncerManager {
         this.logger.info({ msg: 'Starting updateJob' });
         await this.jobManagerClient.updateJob<IJobParameters>(job.id, payload);
         this.logger.info({ msg: 'Done updateJob' });
-      } catch (err) {
-        this.logger.error({ msg: err });
-        if (catalogMetadataId !== null) {
-          await this.deleteCatalogMetadata(catalogMetadataId);
+      } catch (error) {
+        if (catalogMetadataId?.id !== undefined) {
+          await this.deleteCatalogMetadata(catalogMetadataId.id);
         }
-
-        throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, `Problem with jobManager.`, true);
+        this.handleError(error, 'Failed to updateJob');
       }
+
+      this.logger.info({ msg: 'Finish job syncer !' });
     };
   }
 
   private async getInProgressJobs(shouldReturnTasks = false): Promise<IJobResponse<IJobParameters, ITaskParameters>[]> {
-    this.logger.info({ msg: 'Starting getInProgressJobs' });
     const queryParams: IFindJobsRequest = {
       isCleaned: false,
       type: this.jobType,
       shouldReturnTasks,
       status: OperationStatus.IN_PROGRESS,
     };
-    try {
-      const jobs = await this.jobManagerClient.getJobs<IJobParameters, ITaskParameters>(queryParams);
-      this.logger.info({ msg: 'Done getInProgressJobs' });
-      return jobs;
-    } catch (err) {
-      this.logger.error({ msg: err });
-      throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, `Problem with jobManager.`, true);
-    }
+
+    this.logger.info({ msg: 'Starting getInProgressJobs', queryParams });
+    const jobs = await this.jobManagerClient.getJobs<IJobParameters, ITaskParameters>(queryParams);
+    this.logger.info({ msg: 'Finishing getInProgressJobs', count: jobs.length });
+    return jobs;
   }
 
-  private async createCatalogMetadata(jobParameters: IJobParameters): Promise<string> {
-    this.logger.info({ msg: 'Starting createCatalogMetadata' });
+  private async createCatalogMetadata(jobParameters: IJobParameters): Promise<Pycsw3DCatalogRecord> {
     const metadata: I3DCatalogUpsertRequestBody = {
       ...jobParameters.metadata,
       links: [
@@ -97,17 +92,12 @@ export class JobSyncerManager {
       body: JSON.stringify(metadata)
     }
 
-    try {
-      const response: Response = await fetch(`${this.catalogUrl}/metadata`, requestOptions);
-      const catalogMetadata = await response.json() as Pycsw3DCatalogRecord;
+    this.logger.info({ msg: 'Starting createCatalogMetadata' });
+    const response: Response = await fetch(`${this.catalogUrl}/metadata`, requestOptions);
+    const catalogMetadata = await response.json() as Pycsw3DCatalogRecord;
 
-      // It should never be undefined
-      this.logger.info({ msg: 'Done createCatalogMetadata' });
-      return catalogMetadata.id as string;
-    } catch (err) {
-      this.logger.error({ msg: err });
-      throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, `Problem with calling to the catalog while finalizing`, true);
-    }
+    this.logger.info({ msg: 'Finishing createCatalogMetadata', id: catalogMetadata.id });
+    return catalogMetadata;
   }
 
   private async deleteCatalogMetadata(id: string): Promise<void> {
@@ -117,11 +107,14 @@ export class JobSyncerManager {
       headers: { 'Content-Type': 'application/json' }
     }
 
-    try {
-      await fetch(`${this.catalogUrl}/metadata/${id}`, requestOptions);
-    } catch (err) {
-      this.logger.error({ msg: err });
-      throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, `Problem in delete catalog metadata`, false);
+    await fetch(`${this.catalogUrl}/metadata/${id}`, requestOptions);
+  }
+
+
+  private handleError(error: unknown, msg: string): void {
+    if (error instanceof Error) {
+      this.logger.error({ error, msg, stack: error.stack });
+      throw error;
     }
   }
 }
