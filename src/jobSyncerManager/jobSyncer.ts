@@ -4,7 +4,7 @@ import { IFindJobsRequest, IJobResponse, IUpdateJobBody, JobManagerClient, Opera
 import { IConfig } from 'config';
 import { inject, injectable } from 'tsyringe';
 import { CatalogManager } from '../catalogManager/catalogManager';
-import { ERROR_WITH_CATALOG_SERVICE, SERVICES } from '../common/constants';
+import { SERVICES } from '../common/constants';
 import { IJobParameters, ITaskParameters } from '../jobSyncerManager/interfaces';
 
 @injectable()
