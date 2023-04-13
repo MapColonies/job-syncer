@@ -6,8 +6,6 @@ export const DEFAULT_SERVER_PORT = 80;
 export const IGNORED_OUTGOING_TRACE_ROUTES = [/^.*\/v1\/metrics.*$/];
 export const IGNORED_INCOMING_TRACE_ROUTES = [/^.*\/docs.*$/];
 
-export const ERROR_WITH_CATALOG_SERVICE = 'Problem with the catalog service';
-
 /* eslint-disable @typescript-eslint/naming-convention */
 export const SERVICES: Record<string, symbol> = {
   LOGGER: Symbol('Logger'),

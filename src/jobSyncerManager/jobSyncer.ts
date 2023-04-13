@@ -35,10 +35,10 @@ export class JobSyncerManager {
         if (isJobCompleted) {
           catalogMetadata = await this.catalogManagerClient.createCatalogMetadata(job.parameters);
         }
-      } catch (err) {
-        this.logger.error({ msg: err });
+      } catch (error) {
+        this.logger.error({ msg: error });
         isCreateCatalogSuccess = false;
-        reason = ERROR_WITH_CATALOG_SERVICE;
+        reason = (error as Error).message;
       }
 
       const status = this.getStatus(job, isJobCompleted, isCreateCatalogSuccess);
