@@ -23,25 +23,31 @@ export class JobSyncerManager {
   public async progressJobs(): Promise<void> {
     this.logger.info({ msg: 'Start job syncer !' });
     const jobs = await this.getInProgressJobs(false);
-    const completedJobs = jobs.filter(job => job.completedTasks === job.taskCount);
 
     let catalogMetadata: Pycsw3DCatalogRecord | null = null;
 
-    for (const job of completedJobs) {
-      let payload: IUpdateJobBody<IJobParameters> = { percentage: 100, status: OperationStatus.COMPLETED };
+    for (const job of jobs) {
+      const isJobCompleted = job.completedTasks === job.taskCount;
+      let payload: IUpdateJobBody<IJobParameters> = {
+        // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+        percentage: parseInt(((job.completedTasks / job.taskCount) * 100).toString()),
+        status: OperationStatus.COMPLETED
+      };
 
       try {
-        catalogMetadata = await this.catalogManagerClient.createCatalogMetadata(job.parameters);
+        if (isJobCompleted) {
+          catalogMetadata = await this.catalogManagerClient.createCatalogMetadata(job.parameters);
+        }
       } catch (err) {
         payload = {
           ...payload, reason: ERROR_WITH_CATALOG_SERVICE, status: OperationStatus.COMPLETED
         }
-      } finally {
-        try {
-          await this.handleUpdateJob(job.id, payload);
-        } catch (error) {
-          await this.handleUpdateJobRejection(error, catalogMetadata);
-        }
+      }
+
+      try {
+        await this.handleUpdateJob(job.id, payload);
+      } catch (error) {
+        await this.handleUpdateJobRejection(error, catalogMetadata);
       }
 
       this.logger.info({ msg: 'Finish job syncer !' });
