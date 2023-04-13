@@ -15,6 +15,3 @@ async function main(): Promise<void> {
 }
 
 void main();
-
-// Exit with a zero status code to mark the Kubernetes Job as successful
-process.exit(0);
