@@ -1,6 +1,7 @@
 import { inject, injectable } from "tsyringe";
 import { Logger } from "@map-colonies/js-logger";
 import { I3DCatalogUpsertRequestBody, Pycsw3DCatalogRecord } from "@map-colonies/mc-model-types";
+import axios from 'axios';
 import { IConfig } from "../common/interfaces";
 import { IJobParameters } from "../jobSyncerManager/interfaces";
 import { SERVICES } from "../common/constants";
@@ -27,28 +28,14 @@ export class CatalogManager {
             ],
         };
 
-        const requestOptions = {
-            method: 'POST',
-            // eslint-disable-next-line @typescript-eslint/naming-convention
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(metadata)
-        }
-
         this.logger.info({ msg: 'Starting createCatalogMetadata' });
-        const response: Response = await fetch(`${this.catalogUrl}/metadata`, requestOptions);
-        const catalogMetadata = await response.json() as Pycsw3DCatalogRecord;
+        const catalogMetadata = await axios.post<Pycsw3DCatalogRecord>(`${this.catalogUrl}/metadata`, metadata);
 
-        this.logger.info({ msg: 'Finishing createCatalogMetadata', id: catalogMetadata.id });
-        return catalogMetadata;
+        this.logger.info({ msg: 'Finishing createCatalogMetadata', id: catalogMetadata.data.id });
+        return catalogMetadata.data;
     }
 
-    public async deleteCatalogMetadata(id: string): Promise<void> {
-        const requestOptions = {
-            method: 'DELETE',
-            // eslint-disable-next-line @typescript-eslint/naming-convention
-            headers: { 'Content-Type': 'application/json' }
-        }
-
-        await fetch(`${this.catalogUrl}/metadata/${id}`, requestOptions);
+    public async deleteCatalogMetadata(id: string): Promise<void> {     
+        await axios.delete(`${this.catalogUrl}/metadata/${id}`);
     }
 }
