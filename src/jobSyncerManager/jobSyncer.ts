@@ -100,8 +100,8 @@ export class JobSyncerManager {
     return payload;
   }
 
-  private getStatus(job: IJobResponse<IJobParameters, ITaskParameters>, isCreateCatalogSuccess: boolean,
-    isJobCompleted: boolean): OperationStatus {
+  private getStatus(job: IJobResponse<IJobParameters, ITaskParameters>, isJobCompleted: boolean,
+    isCreateCatalogSuccess: boolean): OperationStatus {
     const isJobNeedToFail = job.failedTasks > 0 && job.inProgressTasks === 0 && job.pendingTasks === 0;
 
     if (!isCreateCatalogSuccess || isJobNeedToFail) {
