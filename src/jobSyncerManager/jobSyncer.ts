@@ -27,22 +27,21 @@ export class JobSyncerManager {
     let catalogMetadata: Pycsw3DCatalogRecord | null = null;
 
     for (const job of jobs) {
+      let reason: string | null = null;
+      let isCreateCatalogSuccess = true;
       const isJobCompleted = job.completedTasks === job.taskCount;
-      let payload: IUpdateJobBody<IJobParameters> = {
-        // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-        percentage: parseInt(((job.completedTasks / job.taskCount) * 100).toString()),
-        status: OperationStatus.COMPLETED
-      };
 
       try {
         if (isJobCompleted) {
           catalogMetadata = await this.catalogManagerClient.createCatalogMetadata(job.parameters);
         }
       } catch (err) {
-        payload = {
-          ...payload, reason: ERROR_WITH_CATALOG_SERVICE, status: OperationStatus.COMPLETED
-        }
+        isCreateCatalogSuccess = false;
+        reason = ERROR_WITH_CATALOG_SERVICE;
       }
+
+      const status = this.getStatus(job, isJobCompleted, isCreateCatalogSuccess);
+      const payload = this.buildPayload(job, status, reason);
 
       try {
         await this.handleUpdateJob(job.id, payload);
@@ -50,7 +49,7 @@ export class JobSyncerManager {
         await this.handleUpdateJobRejection(error, catalogMetadata);
       }
 
-      this.logger.info({ msg: 'Finish job syncer !' });
+      this.logger.info({ msg: 'Finish job syncer !', jobId: job.id, payload});
     };
   }
 
@@ -83,5 +82,36 @@ export class JobSyncerManager {
       this.logger.error({ error, msg: "Failed to updateJob", stack: error.stack });
       throw error;
     }
+  }
+
+  private buildPayload(job: IJobResponse<IJobParameters, ITaskParameters>, status:
+    OperationStatus, reason: string | null): IUpdateJobBody<IJobParameters> {
+
+    const payload: IUpdateJobBody<IJobParameters> = {
+      // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+      percentage: parseInt(((job.completedTasks / job.taskCount) * 100).toString()),
+      status,
+    }
+
+    if (reason !== null) {
+      payload.reason = reason
+    }
+
+    return payload;
+  }
+
+  private getStatus(job: IJobResponse<IJobParameters, ITaskParameters>, isCreateCatalogSuccess: boolean,
+    isJobCompleted: boolean): OperationStatus {
+    const isJobNeedToFail = job.failedTasks > 0 && job.inProgressTasks === 0 && job.pendingTasks === 0;
+
+    if (!isCreateCatalogSuccess || isJobNeedToFail) {
+      return OperationStatus.FAILED;
+    }
+
+    if (isJobCompleted) {
+      return OperationStatus.COMPLETED;
+    }
+
+    return OperationStatus.IN_PROGRESS;
   }
 }
