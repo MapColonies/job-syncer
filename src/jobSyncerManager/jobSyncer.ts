@@ -36,6 +36,7 @@ export class JobSyncerManager {
           catalogMetadata = await this.catalogManagerClient.createCatalogMetadata(job.parameters);
         }
       } catch (err) {
+        this.logger.error({ msg: err });
         isCreateCatalogSuccess = false;
         reason = ERROR_WITH_CATALOG_SERVICE;
       }
