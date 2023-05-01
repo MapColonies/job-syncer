@@ -27,6 +27,10 @@ export class JobSyncerManager {
     let catalogMetadata: Pycsw3DCatalogRecord | null = null;
 
     for (const job of jobs) {
+      if (job.taskCount === 0) {
+        this.logger.error({ msg: "This job has 0 tasks!! Not good" , job: job.id});
+        continue;
+      }
       let reason: string | null = null;
       let isCreateCatalogSuccess = true;
       const isJobCompleted = job.completedTasks === job.taskCount;
@@ -87,7 +91,7 @@ export class JobSyncerManager {
 
   private buildPayload(job: IJobResponse<IJobParameters, ITaskParameters>, status:
     OperationStatus, reason: string | null): IUpdateJobBody<IJobParameters> {
-
+      
     const payload: IUpdateJobBody<IJobParameters> = {
       // eslint-disable-next-line @typescript-eslint/no-magic-numbers
       percentage: parseInt(((job.completedTasks / job.taskCount) * 100).toString()),
