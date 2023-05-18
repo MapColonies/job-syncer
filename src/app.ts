@@ -5,7 +5,7 @@ import { JobSyncerManager } from './jobSyncerManager/jobSyncer';
 
 @singleton()
 export class App {
-  public constructor(@inject(SERVICES.JOB_SYNCER_MANAGER) private readonly jobSyncerManager: JobSyncerManager) { }
+  public constructor(@inject(SERVICES.JOB_SYNCER_MANAGER) private readonly jobSyncerManager: JobSyncerManager) {}
 
   public async run(): Promise<void> {
     await this.jobSyncerManager.progressJobs();

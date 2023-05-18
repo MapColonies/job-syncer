@@ -15,7 +15,7 @@ export class JobSyncerManager {
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
     @inject(SERVICES.JOB_MANAGER_CLIENT) private readonly jobManagerClient: JobManagerClient,
-    @inject(SERVICES.CATALOG_MANAGER) private readonly catalogManagerClient: CatalogManager,
+    @inject(SERVICES.CATALOG_MANAGER) private readonly catalogManagerClient: CatalogManager
   ) {
     this.jobType = this.config.get<string>('jobManager.jobType');
   }
@@ -28,7 +28,7 @@ export class JobSyncerManager {
 
     for (const job of jobs) {
       if (job.taskCount === 0) {
-        this.logger.error({ msg: "This job has 0 tasks!! Not good" , job: job.id});
+        this.logger.error({ msg: 'This job has 0 tasks!! Not good', job: job.id });
         continue;
       }
       let reason: string | null = null;
@@ -54,8 +54,8 @@ export class JobSyncerManager {
         await this.handleUpdateJobRejection(error, catalogMetadata);
       }
 
-      this.logger.info({ msg: 'Finish job syncer !', jobId: job.id, payload});
-    };
+      this.logger.info({ msg: 'Finish job syncer !', jobId: job.id, payload });
+    }
   }
 
   private async getInProgressJobs(shouldReturnTasks = false): Promise<IJobResponse<IJobParameters, ITaskParameters>[]> {
@@ -84,29 +84,30 @@ export class JobSyncerManager {
     }
 
     if (error instanceof Error) {
-      this.logger.error({ error, msg: "Failed to updateJob", stack: error.stack });
+      this.logger.error({ error, msg: 'Failed to updateJob', stack: error.stack });
       throw error;
     }
   }
 
-  private buildPayload(job: IJobResponse<IJobParameters, ITaskParameters>, status:
-    OperationStatus, reason: string | null): IUpdateJobBody<IJobParameters> {
-      
+  private buildPayload(
+    job: IJobResponse<IJobParameters, ITaskParameters>,
+    status: OperationStatus,
+    reason: string | null
+  ): IUpdateJobBody<IJobParameters> {
     const payload: IUpdateJobBody<IJobParameters> = {
       // eslint-disable-next-line @typescript-eslint/no-magic-numbers
       percentage: parseInt(((job.completedTasks / job.taskCount) * 100).toString()),
       status,
-    }
+    };
 
     if (reason !== null) {
-      payload.reason = reason
+      payload.reason = reason;
     }
 
     return payload;
   }
 
-  private getStatus(job: IJobResponse<IJobParameters, ITaskParameters>, isJobCompleted: boolean,
-    isCreateCatalogSuccess: boolean): OperationStatus {
+  private getStatus(job: IJobResponse<IJobParameters, ITaskParameters>, isJobCompleted: boolean, isCreateCatalogSuccess: boolean): OperationStatus {
     const isJobNeedToFail = job.failedTasks > 0 && job.inProgressTasks === 0 && job.pendingTasks === 0;
 
     if (!isCreateCatalogSuccess || isJobNeedToFail) {

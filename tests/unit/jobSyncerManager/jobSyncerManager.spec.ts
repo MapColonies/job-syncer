@@ -12,7 +12,7 @@ describe('jobSyncerManager', () => {
     getApp({
       override: [
         { token: SERVICES.JOB_MANAGER_CLIENT, provider: { useValue: jobManagerClientMock } },
-        { token: SERVICES.CATALOG_MANAGER, provider: { useValue: catalogManagerClientMock } }
+        { token: SERVICES.CATALOG_MANAGER, provider: { useValue: catalogManagerClientMock } },
       ],
     });
 
@@ -39,7 +39,7 @@ describe('jobSyncerManager', () => {
       jobManagerClientMock.getJobs.mockResolvedValueOnce(getJobsMockResponse);
       jobManagerClientMock.updateJob.mockResolvedValue(undefined);
       catalogManagerClientMock.createCatalogMetadata.mockResolvedValue(catalogMetadataMock);
-      const completedJobsCount = getJobsMockResponse.filter(job => job.completedTasks === job.taskCount).length
+      const completedJobsCount = getJobsMockResponse.filter((job) => job.completedTasks === job.taskCount).length;
 
       await jobSyncerManager.progressJobs();
 

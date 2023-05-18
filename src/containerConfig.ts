@@ -36,7 +36,7 @@ export const registerExternalValues = (options?: RegisterOptions): DependencyCon
     { token: SERVICES.METRICS, provider: { useValue: metrics } },
     { token: SERVICES.JOB_MANAGER_CLIENT, provider: { useFactory: () => new JobManagerClient(logger, jobConfig.jobType, jobConfig.url) } },
     { token: SERVICES.JOB_SYNCER_MANAGER, provider: { useClass: JobSyncerManager } },
-    { token: SERVICES.CATALOG_MANAGER, provider: { useClass: CatalogManager } }
+    { token: SERVICES.CATALOG_MANAGER, provider: { useClass: CatalogManager } },
   ];
 
   return registerDependencies(dependencies, options?.override, options?.useChild);
