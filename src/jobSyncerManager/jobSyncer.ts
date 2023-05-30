@@ -4,21 +4,17 @@ import { IFindJobsRequest, IJobResponse, IUpdateJobBody, JobManagerClient, Opera
 import { IConfig } from 'config';
 import { inject, injectable } from 'tsyringe';
 import { CatalogManager } from '../catalogManager/catalogManager';
-import { SERVICES } from '../common/constants';
+import { JOB_TYPE, SERVICES } from '../common/constants';
 import { IJobParameters, ITaskParameters } from '../jobSyncerManager/interfaces';
 
 @injectable()
 export class JobSyncerManager {
-  private readonly jobType: string;
-
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
     @inject(SERVICES.JOB_MANAGER_CLIENT) private readonly jobManagerClient: JobManagerClient,
     @inject(SERVICES.CATALOG_MANAGER) private readonly catalogManagerClient: CatalogManager
-  ) {
-    this.jobType = this.config.get<string>('jobManager.jobType');
-  }
+  ) {}
 
   public async progressJobs(): Promise<void> {
     this.logger.info({ msg: 'Start job syncer !' });
@@ -61,7 +57,7 @@ export class JobSyncerManager {
   private async getInProgressJobs(shouldReturnTasks = false): Promise<IJobResponse<IJobParameters, ITaskParameters>[]> {
     const queryParams: IFindJobsRequest = {
       isCleaned: false,
-      type: this.jobType,
+      type: JOB_TYPE,
       shouldReturnTasks,
       status: OperationStatus.IN_PROGRESS,
     };
