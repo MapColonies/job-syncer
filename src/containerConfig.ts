@@ -18,7 +18,6 @@ export interface RegisterOptions {
 
 export const registerExternalValues = (options?: RegisterOptions): DependencyContainer => {
   const loggerConfig = config.get<LoggerOptions>('telemetry.logger');
-  // @ts-expect-error the signature is wrong
   const logger = jsLogger({ ...loggerConfig, prettyPrint: loggerConfig.prettyPrint, hooks: { logMethod } });
   const jobConfig: JobManagerConfig = config.get<JobManagerConfig>('jobManager');
 
@@ -34,7 +33,7 @@ export const registerExternalValues = (options?: RegisterOptions): DependencyCon
     { token: SERVICES.TRACER, provider: { useValue: tracer } },
     { token: SERVICES.METER, provider: { useValue: meter } },
     { token: SERVICES.METRICS, provider: { useValue: metrics } },
-    { token: SERVICES.JOB_MANAGER_CLIENT, provider: { useFactory: () => new JobManagerClient(logger, jobConfig.jobType, jobConfig.url) } },
+    { token: SERVICES.JOB_MANAGER_CLIENT, provider: { useFactory: () => new JobManagerClient(logger, jobConfig.url) } },
     { token: SERVICES.JOB_SYNCER_MANAGER, provider: { useClass: JobSyncerManager } },
     { token: SERVICES.CATALOG_MANAGER, provider: { useClass: CatalogManager } },
   ];
