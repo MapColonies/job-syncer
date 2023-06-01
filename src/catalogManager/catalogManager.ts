@@ -10,10 +10,14 @@ import { SERVICES } from '../common/constants';
 export class CatalogManager {
   private readonly catalogUrl: string;
   private readonly nginxUrl: string;
+  private readonly protocol: string;
+  private readonly s3Bucket: string;
 
   public constructor(@inject(SERVICES.LOGGER) private readonly logger: Logger, @inject(SERVICES.CONFIG) private readonly config: IConfig) {
     this.catalogUrl = this.config.get<string>('catalog.url');
     this.nginxUrl = this.config.get<string>('nginx.url');
+    this.protocol = this.config.get<string>('catalog.link.protocol');
+    this.s3Bucket = this.config.get<string>('catalog.link.s3Bucket');
   }
 
   public async createCatalogMetadata(jobParameters: IJobParameters): Promise<Pycsw3DCatalogRecord> {
@@ -21,8 +25,8 @@ export class CatalogManager {
       ...jobParameters.metadata,
       links: [
         {
-          protocol: '3D_LAYER',
-          url: `${this.nginxUrl}/${jobParameters.modelId}/${jobParameters.tilesetFilename}`,
+          protocol: this.protocol,
+          url: `${this.nginxUrl}/${this.s3Bucket}/${jobParameters.modelId}/${jobParameters.tilesetFilename}`,
         },
       ],
     };

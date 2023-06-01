@@ -19,7 +19,11 @@
     "jobType": "Ingestion_New_3D"
   },
   "catalog": {
-    "url": "http://127.0.0.1:8083"
+    "url": "http://127.0.0.1:8083",
+    "link":{
+      "protocol": "3D_TILES",
+      "s3Bucket": "bucket"
+    } 
   },
   "nginx": {
     "url": "http://127.0.0.1:8084"
