@@ -27,8 +27,7 @@
   "catalog": {
     "url": "CATALOG_URL",
     "link":{
-      "protocol": "PROTOCOL",
-      "s3Bucket": "S3_DEST_BUCKET"
+      "protocol": "PROTOCOL"
     } 
   },
   "nginx": {

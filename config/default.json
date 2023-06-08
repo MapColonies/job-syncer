@@ -21,8 +21,7 @@
   "catalog": {
     "url": "http://127.0.0.1:8083",
     "link":{
-      "protocol": "3D_TILES",
-      "s3Bucket": "bucket"
+      "protocol": "3D_TILES"
     } 
   },
   "nginx": {
