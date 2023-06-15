@@ -4,6 +4,7 @@ export interface IJobParameters {
   metadata: Layer3DMetadata;
   modelId: string;
   tilesetFilename: string;
+  filesCount: number;
 }
 
 export interface ITaskParameters {
