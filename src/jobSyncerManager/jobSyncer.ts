@@ -18,7 +18,7 @@ export class JobSyncerManager {
 
   public async progressJobs(): Promise<void> {
     this.logger.info({ msg: 'Start job syncer !' });
-    const jobs = await this.getInProgressJobs(false);
+    const jobs = await this.getInProgressJobs();
 
     let catalogMetadata: Pycsw3DCatalogRecord | null = null;
 
@@ -54,11 +54,11 @@ export class JobSyncerManager {
     }
   }
 
-  private async getInProgressJobs(shouldReturnTasks = false): Promise<IJobResponse<IJobParameters, ITaskParameters>[]> {
+  private async getInProgressJobs(): Promise<IJobResponse<IJobParameters, ITaskParameters>[]> {
     const queryParams: IFindJobsRequest = {
       isCleaned: false,
       type: JOB_TYPE,
-      shouldReturnTasks,
+      shouldReturnTasks: false,
       status: OperationStatus.IN_PROGRESS,
     };
 
