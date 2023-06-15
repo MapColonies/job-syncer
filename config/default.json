@@ -20,9 +20,9 @@
   },
   "catalog": {
     "url": "http://127.0.0.1:8083",
-    "link":{
+    "link": {
       "protocol": "3D_TILES"
-    } 
+    }
   },
   "nginx": {
     "url": "http://127.0.0.1:8084"
