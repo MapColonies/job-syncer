@@ -5,7 +5,7 @@ import { getApp } from '../../../src/app';
 import { SERVICES } from '../../../src/common/constants';
 import { JobSyncerManager } from '../../../src/jobSyncerManager/jobSyncer';
 import { createJob, createJobs, jobManagerClientMock } from '../../mocks/jobManagerMock';
-import { catalogManagerClientMock, catalogMetadataMock } from '../../mocks/catalogManagerMock';
+import { catalogManagerClientMock, createFakeMetadata } from '../../mocks/catalogManagerMock';
 import { IJobParameters } from '../../../src/jobSyncerManager/interfaces';
 
 describe('jobSyncerManager', () => {
@@ -28,6 +28,16 @@ describe('jobSyncerManager', () => {
   });
 
   describe('progressJobs', () => {
+    it('When have in-progress jobs with no tasks, should do nothing', async () => {
+      const job = createJob(false);
+      job.taskCount = 0;
+      jobManagerClientMock.getJobs.mockResolvedValue([job]);
+
+      const response = await jobSyncerManager.progressJobs();
+
+      expect(response).toBeUndefined();
+    });
+
     it('When does not have in-progress jobs, should do nothing', async () => {
       jobManagerClientMock.getJobs.mockResolvedValue([]);
       jobManagerClientMock.updateJob.mockResolvedValue(undefined);
@@ -43,7 +53,7 @@ describe('jobSyncerManager', () => {
       const jobs = createJobs();
       jobManagerClientMock.getJobs.mockResolvedValue(jobs);
       jobManagerClientMock.updateJob.mockResolvedValue(undefined);
-      catalogManagerClientMock.createCatalogMetadata.mockResolvedValue(catalogMetadataMock);
+      catalogManagerClientMock.createCatalogMetadata.mockResolvedValue(createFakeMetadata);
 
       await jobSyncerManager.progressJobs();
 
@@ -52,50 +62,45 @@ describe('jobSyncerManager', () => {
     });
 
     it('When has completed job, it should insert the metadata to the catalog service', async () => {
-      const jobs = createJobs();
-      jobs.push(createJob(true));
-      jobManagerClientMock.getJobs.mockResolvedValue(jobs);
+      const job = createJob(true);
+      jobManagerClientMock.getJobs.mockResolvedValue([job]);
       jobManagerClientMock.updateJob.mockResolvedValue(undefined);
-      catalogManagerClientMock.createCatalogMetadata.mockResolvedValue(catalogMetadataMock);
-      const completedJobsCount = jobs.filter((job) => job.completedTasks === job.taskCount).length;
+      catalogManagerClientMock.createCatalogMetadata.mockResolvedValue(createFakeMetadata);
 
       await jobSyncerManager.progressJobs();
 
       expect(jobManagerClientMock.getJobs).toHaveBeenCalled();
-      expect(catalogManagerClientMock.createCatalogMetadata).toHaveBeenCalledTimes(completedJobsCount);
-      expect(jobManagerClientMock.updateJob).toHaveBeenCalledTimes(jobs.length);
+      expect(jobManagerClientMock.updateJob).toHaveBeenCalled();
+      expect(catalogManagerClientMock.createCatalogMetadata).toHaveBeenCalled();
     });
 
     it('When has completed job but catalog failed to create metadata, the job will update with failed status', async () => {
-      const jobs = createJobs();
-      jobs.push(createJob(false, true));
-      jobManagerClientMock.getJobs.mockResolvedValue(jobs);
+      const job = createJob(true);
+      jobManagerClientMock.getJobs.mockResolvedValue([job]);
       jobManagerClientMock.updateJob.mockResolvedValue(undefined);
       catalogManagerClientMock.createCatalogMetadata.mockRejectedValue(new Error('problem'));
       const payload: IUpdateJobBody<IJobParameters> = {
-        // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-        percentage: parseInt(((jobs[jobs.length - 1].completedTasks / jobs[jobs.length - 1].taskCount) * 100).toString()),
+        percentage: 100,
         status: OperationStatus.FAILED,
+        reason: 'problem',
       };
 
       await jobSyncerManager.progressJobs();
 
       expect(jobManagerClientMock.getJobs).toHaveBeenCalled();
-      expect(jobManagerClientMock.updateJob).toHaveBeenLastCalledWith(jobs[jobs.length - 1].id, payload);
+      expect(jobManagerClientMock.updateJob).toHaveBeenLastCalledWith(job.id, payload);
     });
 
     it('When updated catalog but failed to update job-manager, the catalog metadata will be removed', async () => {
-      const jobs = createJobs();
-      jobs.push(createJob(true));
-      jobManagerClientMock.getJobs.mockResolvedValue(jobs);
-      jobManagerClientMock.updateJob.mockRejectedValue(undefined);
-      catalogManagerClientMock.createCatalogMetadata.mockResolvedValue(catalogMetadataMock);
+      const job = createJob(true);
+      jobManagerClientMock.getJobs.mockResolvedValue([job]);
+      jobManagerClientMock.updateJob.mockRejectedValue(new Error('problem'));
+      catalogManagerClientMock.createCatalogMetadata.mockResolvedValue(createFakeMetadata);
       catalogManagerClientMock.deleteCatalogMetadata.mockResolvedValue(undefined);
 
-      await jobSyncerManager.progressJobs();
-
+      await expect(jobSyncerManager.progressJobs()).rejects.toThrow('problem');
       expect(jobManagerClientMock.getJobs).toHaveBeenCalled();
-      expect(jobManagerClientMock.updateJob).toHaveBeenCalledTimes(jobs.length);
+      expect(catalogManagerClientMock.createCatalogMetadata).toHaveBeenCalled();
       expect(catalogManagerClientMock.deleteCatalogMetadata).toHaveBeenCalled();
     });
   });

@@ -24,12 +24,14 @@ export const createJob = (allTasksCompleted = false, hasFailedTasks = false): IJ
   const completedTasks = randNumber({ min: 1, max: maxTaskCount - 1 });
   const taskCount = allTasksCompleted ? completedTasks : randNumber({ min: completedTasks + 1, max: maxTaskCount });
   const failedTasks = hasFailedTasks ? taskCount - completedTasks : 0;
-  const pendingTasks = hasFailedTasks ? 0 : taskCount - completedTasks;
+  const inProgressTasks = taskCount - completedTasks - failedTasks;
+  const pendingTasks = taskCount - completedTasks - failedTasks - inProgressTasks;
   return {
     id: randUuid(),
     completedTasks,
     taskCount,
     failedTasks,
+    inProgressTasks,
     pendingTasks,
     status: OperationStatus.IN_PROGRESS,
     resourceId: randUuid(),
@@ -44,7 +46,6 @@ export const createJob = (allTasksCompleted = false, hasFailedTasks = false): IJ
     isCleaned: false,
     priority: randNumber(),
     expiredTasks: 0,
-    inProgressTasks: 0,
     abortedTasks: 0,
     domain: randWord(),
   };

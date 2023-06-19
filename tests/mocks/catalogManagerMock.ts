@@ -6,6 +6,6 @@ export const catalogManagerClientMock = {
   deleteCatalogMetadata: jest.fn(),
 };
 
-export const catalogMetadataMock: Pycsw3DCatalogRecord = {
+export const createFakeMetadata: Pycsw3DCatalogRecord = {
   id: randUuid(),
 } as Pycsw3DCatalogRecord;
