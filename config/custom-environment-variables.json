@@ -26,9 +26,9 @@
   },
   "catalog": {
     "url": "CATALOG_URL",
-    "link":{
+    "link": {
       "protocol": "PROTOCOL"
-    } 
+    }
   },
   "nginx": {
     "url": "NGINX_URL"

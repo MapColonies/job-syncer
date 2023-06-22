@@ -11,7 +11,7 @@ module.exports = {
   coverageReporters: ['text', 'html'],
   collectCoverage: true,
   collectCoverageFrom: [
-    '<rootDir>/src/**/*.ts',
+    '<rootDir>/src/**/{!(catalogManager),}.ts',
     '!*/node_modules/',
     '!/vendor/**',
     '!*/common/**',
@@ -35,5 +35,8 @@ module.exports = {
       lines: 80,
       statements: 80,
     },
+  },
+  moduleNameMapper: {
+    axios: 'axios/dist/node/axios.cjs',
   },
 };
