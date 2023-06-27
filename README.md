@@ -1,54 +1,47 @@
-# 3d Job Syncer
+# JobSyncer Service
+The JobSyncer service is responsible for updating the status and progress of jobs, as well as finalizing them when they are completed. It operates as a cron job that periodically retrieves all jobs in the "in-progress" state and updates their progress based on the assigned tasks.
 
-----------------------------------
+## Functionality
+Updating Job Progress: The JobSyncer service retrieves all jobs in the "in-progress" state and updates their progress, typically represented as a percentage. This progress indicates the completion level of the tasks associated with each job.
 
-This script should run as cron job and update job to completed status and also update catalog metadata.
+Job Finalization: When all tasks associated with a job have been completed (i.e., there are no remaining "in-progress" tasks), the JobSyncer service performs the following actions:
 
-### Template Usage Notes:
-- the docker file contains default command to use when running container without additional parameters
-- command handlers can be async or sync functions
-- naming command '$0' will make it the default command
-### Template Features:
+a. Calls Catalog Service: The service communicates with the Catalog service, providing it with the metadata of the model associated with the job. This step ensures that the Catalog service has the necessary information to process the completed job successfully.
 
-- eslint configuration by [@map-colonies/eslint-config](https://github.com/MapColonies/eslint-config)
+b. Sets Job State to "Completed": After successfully interacting with the Catalog service, the JobSyncer service sets the job's state to "completed". This indicates that all tasks have been finished, and the job is ready for further processing or evaluation.
 
-- prettier configuration by [@map-colonies/prettier-config](https://github.com/MapColonies/prettier-config)
+Handling Failed Tasks: If any of the tasks associated with a job have failed, the JobSyncer service promptly identifies this situation and handles it accordingly:
 
-- jest
+a. Failing the Job: In case of a failed task, the JobSyncer service marks the entire job as failed. This action alerts the relevant stakeholders that the job could not be successfully completed and requires further attention or intervention.
 
-- .nvmrc
+## Usage
+To use the JobSyncer service effectively, follow these steps:
 
-- Multi stage producton-ready Dockerfile
+Configure the cron job: Set up a cron job that runs the JobSyncer service at regular intervals. This ensures that job updates and finalization occur in a timely manner.
 
-- commitlint
+Ensure job states: Ensure that your job management system has appropriate states, such as "in-progress," "completed," and "failed," to facilitate the synchronization and finalization processes.
 
-- git hooks
+Implement job status updates: Develop functionality within the JobSyncer service to retrieve and update the progress of jobs in the "in-progress" state. This involves iterating through each job, tracking the progress of associated tasks, and updating the job progress accordingly.
 
-- logging by [@map-colonies/js-logger](https://github.com/MapColonies/js-logger)
+Handle job finalization: Implement the necessary logic to detect when all tasks for a job are completed. Upon reaching this state, initiate the finalization process, which involves interacting with the Catalog service and setting the job state to "completed."
 
-- config load with [node-config](https://www.npmjs.com/package/node-config)
+Manage failed tasks: Implement error handling mechanisms to identify failed tasks within a job. When a failed task is detected, mark the entire job as failed and notify the relevant stakeholders.
 
-- Tracing and metrics by [@map-colonies/telemetry](https://github.com/MapColonies/telemetry)
+Monitor and troubleshoot: Regularly monitor the JobSyncer service for any issues or failures. Ensure that appropriate logging and error handling mechanisms are in place to aid in troubleshooting and resolving any potential issues.
 
-- github templates
+## Dependencies
+The JobSyncer service relies on the following components:
 
-- bug report
+Job Management System: The service assumes the existence of a job management system that tracks job states and task progress.
+Catalog Service: The Catalog service is required for finalizing jobs. It receives metadata about the model associated with each completed job.
+Cron Scheduler: A cron job scheduler is necessary to execute the JobSyncer service at regular intervals.
 
-- feature request
+## Configuration
+The JobSyncer service may require the following configuration options:
 
-- pull request
-
-- github actions
-
-- on pull_request
-
-- LGTM
-
-- test
-
-- lint
-
-- snyk
+Job Management System API: Provide the necessary API endpoints or credentials to connect to the job management system and retrieve job and task information.
+Catalog Service API: Configure the API endpoints or credentials required to interact with the Catalog service and provide the metadata for completed jobs.
+Cron Job Schedule: Set the
 
 ## Installation
 
@@ -68,7 +61,7 @@ Clone the project
 
 ```bash
 
-git clone https://link-to-project
+git clone https://github.com/MapColonies/3d-job-syncer.git
 
 ```
 
@@ -76,7 +69,7 @@ Go to the project directory
 
 ```bash
 
-cd my-project
+cd 3d-job-syncer
 
 ```
 
