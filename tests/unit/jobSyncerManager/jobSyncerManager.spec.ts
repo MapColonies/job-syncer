@@ -28,16 +28,6 @@ describe('jobSyncerManager', () => {
   });
 
   describe('progressJobs', () => {
-    it('When have in-progress jobs with no tasks, should do nothing', async () => {
-      const job = createJob(false);
-      job.taskCount = 0;
-      jobManagerClientMock.getJobs.mockResolvedValue([job]);
-
-      const response = await jobSyncerManager.progressJobs();
-
-      expect(response).toBeUndefined();
-    });
-
     it('When does not have in-progress jobs, should do nothing', async () => {
       jobManagerClientMock.getJobs.mockResolvedValue([]);
       jobManagerClientMock.updateJob.mockResolvedValue(undefined);

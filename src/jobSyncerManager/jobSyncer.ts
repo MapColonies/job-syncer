@@ -23,10 +23,6 @@ export class JobSyncerManager {
     let catalogMetadata: Pycsw3DCatalogRecord | null = null;
 
     for (const job of jobs) {
-      if (job.taskCount === 0) {
-        this.logger.error({ msg: 'This job has 0 tasks!! Not good', job: job.id });
-        continue;
-      }
       let reason: string | null = null;
       let isCreateCatalogSuccess = true;
       const isJobCompleted = job.completedTasks === job.taskCount;
@@ -59,7 +55,6 @@ export class JobSyncerManager {
       isCleaned: false,
       type: JOB_TYPE,
       shouldReturnTasks: false,
-      status: OperationStatus.IN_PROGRESS,
     };
 
     this.logger.info({ msg: 'Starting getInProgressJobs', queryParams });
