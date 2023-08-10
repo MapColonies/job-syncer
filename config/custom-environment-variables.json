@@ -27,10 +27,10 @@
   "catalog": {
     "url": "CATALOG_URL",
     "link": {
-      "protocol": "PROTOCOL"
+      "name": "LINK_NAME",
+      "description": "LINK_DESCRIPTION",
+      "url": "LINK_URL",
+      "protocol": "LINK_PROTOCOL"
     }
-  },
-  "nginx": {
-    "url": "NGINX_URL"
   }
 }

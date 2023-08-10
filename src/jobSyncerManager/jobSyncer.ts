@@ -52,7 +52,7 @@ export class JobSyncerManager {
 
   private async getInProgressJobs(): Promise<IJobResponse<IJobParameters, ITaskParameters>[]> {
     const queryParams: IFindJobsRequest = {
-      isCleaned: false,
+      status: OperationStatus.IN_PROGRESS,
       type: JOB_TYPE,
       shouldReturnTasks: false,
     };
