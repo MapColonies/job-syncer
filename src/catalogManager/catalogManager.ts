@@ -20,10 +20,10 @@ export class CatalogManager {
     if (this.link.url == undefined) {
       throw new Error('link must have a url!');
     }
-    const links: Link[] = [{...this.link, url: `${this.link.url}/${jobParameters.modelId}/${jobParameters.tilesetFilename}`}]
+    const links: Link[] = [{ ...this.link, url: `${this.link.url}/${jobParameters.modelId}/${jobParameters.tilesetFilename}` }];
     const metadata: I3DCatalogUpsertRequestBody = {
       ...jobParameters.metadata,
-      links
+      links,
     };
 
     this.logger.info({ msg: 'Starting createCatalogMetadata' });
