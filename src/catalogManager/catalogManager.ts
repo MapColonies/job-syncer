@@ -23,7 +23,7 @@ export class CatalogManager {
     const links: Link[] = [{ ...this.link, url: `${this.link.url}/${jobParameters.modelId}/${jobParameters.tilesetFilename}` }];
     const metadata: I3DCatalogUpsertRequestBody = {
       ...jobParameters.metadata,
-      links
+      links,
     };
 
     this.logger.info({ msg: 'Starting createCatalogMetadata' });
