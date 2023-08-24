@@ -17,7 +17,7 @@ export const createJobParameters = (): IJobParameters => {
     modelId: randUuid(),
     tilesetFilename: randUuid(),
     filesCount: randNumber(),
-    pathToTileset: `${randWord()}/${randWord()}`
+    pathToTileset: `${randWord()}/${randWord()}`,
   };
 };
 
