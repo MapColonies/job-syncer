@@ -5,6 +5,7 @@ export interface IJobParameters {
   modelId: string;
   tilesetFilename: string;
   filesCount: number;
+  pathToTileset: string;
 }
 
 export interface ITaskParameters {
