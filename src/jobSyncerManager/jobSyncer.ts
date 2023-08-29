@@ -54,6 +54,7 @@ export class JobSyncerManager {
     const queryParams: IFindJobsRequest = {
       status: OperationStatus.IN_PROGRESS,
       type: JOB_TYPE,
+      // In newer version of job-manager, this is supposed to be default
       shouldReturnTasks: false,
     };
 
