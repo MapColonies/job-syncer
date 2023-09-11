@@ -27,10 +27,10 @@ export class CatalogManager {
       links,
     };
 
-    this.logger.info({ msg: 'Starting createCatalogMetadata' });
+    this.logger.debug({ msg: 'Starting createCatalogMetadata' });
     const catalogMetadata = await axios.post<Pycsw3DCatalogRecord>(`${this.catalogUrl}/metadata`, metadata);
 
-    this.logger.info({ msg: 'Finishing createCatalogMetadata', id: catalogMetadata.data.id });
+    this.logger.debug({ msg: 'Finishing createCatalogMetadata', id: catalogMetadata.data.id });
     return catalogMetadata.data;
   }
 
