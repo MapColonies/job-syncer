@@ -25,12 +25,13 @@ export class CatalogManager {
     const metadata: I3DCatalogUpsertRequestBody = {
       ...jobParameters.metadata,
       links,
+      id: jobParameters.modelId,
     };
 
     this.logger.debug({ msg: 'Starting createCatalogMetadata' });
     const catalogMetadata = await axios.post<Pycsw3DCatalogRecord>(`${this.catalogUrl}/metadata`, metadata);
-
     this.logger.debug({ msg: 'Finishing createCatalogMetadata', id: catalogMetadata.data.id });
+
     return catalogMetadata.data;
   }
 

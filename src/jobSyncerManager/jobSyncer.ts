@@ -17,7 +17,7 @@ export class JobSyncerManager {
   ) {}
 
   public async progressJobs(): Promise<void> {
-    this.logger.info({ msg: 'Starting job syncer!' });
+    this.logger.info({ msg: 'Starting job syncer' });
     const jobs = await this.getInProgressJobs();
 
     let catalogMetadata: Pycsw3DCatalogRecord | null = null;
@@ -30,7 +30,7 @@ export class JobSyncerManager {
       try {
         if (isJobCompleted) {
           catalogMetadata = await this.catalogManagerClient.createCatalogMetadata(job.parameters);
-          this.logger.info({ msg: `Job: ${job.id} is completed`});
+          this.logger.info({ msg: `Job: ${job.id} is completed` });
         }
       } catch (error) {
         this.logger.error({ msg: error });
@@ -47,7 +47,7 @@ export class JobSyncerManager {
         await this.handleUpdateJobRejection(error, catalogMetadata);
       }
 
-      this.logger.info({ msg: 'Finish job syncer !', jobId: job.id, payload });
+      this.logger.debug({ msg: 'Finished job syncer', jobId: job.id, payload });
     }
   }
 
