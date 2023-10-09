@@ -25,7 +25,7 @@ export class CatalogManager {
     const metadata: I3DCatalogUpsertRequestBody = {
       ...jobParameters.metadata,
       links,
-      id: jobParameters.modelId
+      id: jobParameters.modelId,
     };
 
     this.logger.debug({ msg: 'Starting createCatalogMetadata' });
