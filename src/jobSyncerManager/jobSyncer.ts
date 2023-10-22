@@ -47,7 +47,13 @@ export class JobSyncerManager {
         await this.handleUpdateJobRejection(error, catalogMetadata);
       }
 
-      this.logger.debug({ msg: 'Finished job syncer', jobId: job.id, modelId: job.parameters.modelId, modelName: job.parameters.metadata.productName, payload });
+      this.logger.debug({
+        msg: 'Finished job syncer',
+        jobId: job.id,
+        modelId: job.parameters.modelId,
+        modelName: job.parameters.metadata.productName,
+        payload,
+      });
     }
   }
 
