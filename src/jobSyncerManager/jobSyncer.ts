@@ -17,7 +17,7 @@ export class JobSyncerManager {
   ) {}
 
   public async progressJobs(): Promise<void> {
-    this.logger.info({ msg: 'Starting job syncer' });
+    this.logger.debug({ msg: 'Starting job syncer' });
     const jobs = await this.getInProgressJobs();
 
     let catalogMetadata: Pycsw3DCatalogRecord | null = null;
@@ -30,10 +30,10 @@ export class JobSyncerManager {
       try {
         if (isJobCompleted) {
           catalogMetadata = await this.catalogManagerClient.createCatalogMetadata(job.parameters);
-          this.logger.info({ msg: `Job: ${job.id} is completed` });
+          this.logger.info({ msg: `Job: ${job.id} is completed`, modelId: job.parameters.modelId, modelName: job.parameters.metadata.productName });
         }
       } catch (error) {
-        this.logger.error({ msg: error });
+        this.logger.error({ msg: error, modelId: job.parameters.modelId, modelName: job.parameters.metadata.productName });
         isCreateCatalogSuccess = false;
         reason = (error as Error).message;
       }
@@ -47,7 +47,7 @@ export class JobSyncerManager {
         await this.handleUpdateJobRejection(error, catalogMetadata);
       }
 
-      this.logger.debug({ msg: 'Finished job syncer', jobId: job.id, payload });
+      this.logger.debug({ msg: 'Finished job syncer', jobId: job.id, modelId: job.parameters.modelId, modelName: job.parameters.metadata.productName, payload });
     }
   }
 
@@ -66,9 +66,9 @@ export class JobSyncerManager {
   }
 
   private async handleUpdateJob(jobId: string, payload: IUpdateJobBody<IJobParameters>): Promise<void> {
-    this.logger.debug({ msg: 'Starting updateJob' });
+    this.logger.debug({ msg: 'Starting updateJob', jobId });
     await this.jobManagerClient.updateJob<IJobParameters>(jobId, payload);
-    this.logger.debug({ msg: 'Done updateJob' });
+    this.logger.debug({ msg: 'Done updateJob', jobId });
   }
 
   private async handleUpdateJobRejection(error: unknown, catalogMetadata: Pycsw3DCatalogRecord | null): Promise<void> {
