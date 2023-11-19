@@ -21,7 +21,7 @@ export const registerExternalValues = (options?: RegisterOptions): DependencyCon
   const logger = jsLogger({ ...loggerConfig, prettyPrint: loggerConfig.prettyPrint, hooks: { logMethod } });
   const jobConfig: JobManagerConfig = config.get<JobManagerConfig>('jobManager');
 
-  const metrics = new Metrics(SERVICE_NAME);
+  const metrics = new Metrics();
   const meter = metrics.start();
 
   tracing.start();
