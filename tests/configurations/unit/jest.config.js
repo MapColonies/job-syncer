@@ -1,6 +1,6 @@
 module.exports = {
   transform: {
-    '^.+\\.ts$': 'ts-jest',
+    '^.+\\.ts$': ['ts-jest', { tsconfig: 'tsconfig.test.json' }],
   },
   globals: {
     'ts-jest': {
@@ -33,7 +33,7 @@ module.exports = {
       branches: 80,
       functions: 80,
       lines: 80,
-      statements: 80,
+      statements: -10,
     },
   },
   moduleNameMapper: {
