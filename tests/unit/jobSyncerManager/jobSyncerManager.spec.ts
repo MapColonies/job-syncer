@@ -1,12 +1,12 @@
 import { container } from 'tsyringe';
-import { IUpdateJobBody, OperationStatus } from '@map-colonies/mc-priority-queue';
+import { IJobResponse, IUpdateJobBody, OperationStatus } from '@map-colonies/mc-priority-queue';
 import jsLogger from '@map-colonies/js-logger';
 import { getApp } from '../../../src/app';
 import { SERVICES } from '../../../src/common/constants';
 import { JobSyncerManager } from '../../../src/jobSyncerManager/jobSyncer';
-import { createJob, createJobs, jobManagerClientMock } from '../../mocks/jobManagerMock';
+import { createJob, createIngestionJobs, jobManagerClientMock, createDeleteJobs } from '../../mocks/jobManagerMock';
 import { catalogManagerClientMock, createFakeMetadata } from '../../mocks/catalogManagerMock';
-import { IJobParameters } from '../../../src/jobSyncerManager/interfaces';
+import { IngestionJobParameters } from '../../../src/jobSyncerManager/interfaces';
 
 describe('jobSyncerManager', () => {
   let jobSyncerManager: JobSyncerManager;
@@ -40,7 +40,9 @@ describe('jobSyncerManager', () => {
     });
 
     it('When has in-progress job, should progress them and update job-manager', async () => {
-      const jobs = createJobs();
+      const ingestionJobs = createIngestionJobs();
+      const deleteJobs = createDeleteJobs();
+      const jobs = [...ingestionJobs, ...deleteJobs];
       jobManagerClientMock.getJobs.mockResolvedValue(jobs);
       jobManagerClientMock.updateJob.mockResolvedValue(undefined);
       catalogManagerClientMock.createCatalogMetadata.mockResolvedValue(createFakeMetadata);
@@ -69,7 +71,7 @@ describe('jobSyncerManager', () => {
       jobManagerClientMock.getJobs.mockResolvedValue([job]);
       jobManagerClientMock.updateJob.mockResolvedValue(undefined);
       catalogManagerClientMock.createCatalogMetadata.mockRejectedValue(new Error('problem'));
-      const payload: IUpdateJobBody<IJobParameters> = {
+      const payload: IUpdateJobBody<IngestionJobParameters> = {
         percentage: 100,
         status: OperationStatus.FAILED,
         reason: 'problem',

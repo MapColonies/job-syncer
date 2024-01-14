@@ -20,34 +20,32 @@ export class JobSyncerManager {
     this.logger.debug({ msg: 'Starting job syncer' });
     const ingestionJobs = await this.getIngestionInProgressJobs();
     const deleteJobs = await this.getDeleteInProgressJobs();
-    const jobs = [...ingestionJobs, ...deleteJobs];
-  
+    const jobs: IJobResponse<IngestionJobParameters | DeleteJobParameters, ITaskParameters>[] = [...ingestionJobs, ...deleteJobs];
+
     let catalogMetadata: Pycsw3DCatalogRecord | null = null;
-  
+
     for (const job of jobs) {
       let reason: string | null = null;
       let isCreateCatalogSuccess = true;
       const isJobCompleted = job.completedTasks === job.taskCount;
-  
+
       try {
         if (isJobCompleted) {
-          // Check if the job type is INGESTION_JOB_TYPE
           if (job.type === INGESTION_JOB_TYPE) {
-            catalogMetadata = await this.catalogManagerClient.createCatalogMetadata(job.parameters);
+            catalogMetadata = await this.catalogManagerClient.createCatalogMetadata(
+              (job as IJobResponse<IngestionJobParameters, ITaskParameters>).parameters
+            );
             this.logger.info({
               msg: `Ingestion Job: ${job.id} is completed`,
               modelId: job.parameters.modelId,
               modelName: job.productName,
             });
-          }
-  
-          // Check if the job type is DELETE_JOB_TYPE
-          if (job.type === DELETE_JOB_TYPE) {
-            // Add your logic for DELETE_JOB_TYPE here
-            // Example: deleteMetadata = await this.someDeleteFunction(job.parameters);
+          } else if (job.type === DELETE_JOB_TYPE) {
+            catalogMetadata = await this.catalogManagerClient.deleteMetadata((job as IJobResponse<DeleteJobParameters, ITaskParameters>).parameters);
             this.logger.info({
               msg: `Delete Job: ${job.id} is completed`,
-              // Add relevant properties here
+              modelId: job.resourceId,
+              modelName: job.productName,
             });
           }
         }
@@ -56,16 +54,16 @@ export class JobSyncerManager {
         isCreateCatalogSuccess = false;
         reason = (error as Error).message;
       }
-  
+
       const status = this.getStatus(job, isJobCompleted, isCreateCatalogSuccess);
       const payload = this.buildPayload(job, status, reason);
-  
+
       try {
         await this.handleUpdateJob(job.id, payload);
       } catch (error) {
         await this.handleUpdateJobRejection(error, catalogMetadata);
       }
-  
+
       this.logger.debug({
         msg: 'Finished job syncer',
         jobId: job.id,
@@ -74,7 +72,6 @@ export class JobSyncerManager {
       });
     }
   }
-  
 
   private async getIngestionInProgressJobs(): Promise<IJobResponse<IngestionJobParameters, ITaskParameters>[]> {
     const queryParams: IFindJobsRequest = {
@@ -139,7 +136,11 @@ export class JobSyncerManager {
     return payload;
   }
 
-  private getStatus(job: IJobResponse<IngestionJobParameters | DeleteJobParameters, ITaskParameters>, isJobCompleted: boolean, isCreateCatalogSuccess: boolean): OperationStatus {
+  private getStatus(
+    job: IJobResponse<IngestionJobParameters | DeleteJobParameters, ITaskParameters>,
+    isJobCompleted: boolean,
+    isCreateCatalogSuccess: boolean
+  ): OperationStatus {
     const isJobNeedToFail = job.failedTasks > 0 && job.inProgressTasks === 0 && job.pendingTasks === 0;
 
     if (!isCreateCatalogSuccess || isJobNeedToFail) {

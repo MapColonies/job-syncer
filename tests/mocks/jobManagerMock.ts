@@ -1,7 +1,7 @@
 import { Layer3DMetadata } from '@map-colonies/mc-model-types';
 import { IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { randBoolean, randNumber, randSentence, randUuid, randWord } from '@ngneat/falso';
-import { IJobParameters, ITaskParameters } from '../../src/jobSyncerManager/interfaces';
+import { DeleteJobParameters, IngestionJobParameters, ITaskParameters } from '../../src/jobSyncerManager/interfaces';
 
 const maxTaskCount = 10;
 const maxJobsNumber = 5;
@@ -11,7 +11,7 @@ export const jobManagerClientMock = {
   getJobs: jest.fn(),
 };
 
-export const createJobParameters = (): IJobParameters => {
+export const createIngestionJobParameters = (): IngestionJobParameters => {
   return {
     metadata: {} as Layer3DMetadata,
     modelId: randUuid(),
@@ -21,7 +21,16 @@ export const createJobParameters = (): IJobParameters => {
   };
 };
 
-export const createJob = (allTasksCompleted = false, hasFailedTasks = false): IJobResponse<IJobParameters, ITaskParameters> => {
+export const createDeleteJobParameters = (): DeleteJobParameters => {
+  return {
+    modelId: randUuid(),
+    pathToTileset: 'path/to/tileset',
+    filesCount: randNumber(),
+    modelName: randWord()
+  };
+};
+
+export const createJob = (allTasksCompleted = false, hasFailedTasks = false): IJobResponse<IngestionJobParameters| DeleteJobParameters, ITaskParameters> => {
   const completedTasks = randNumber({ min: 1, max: maxTaskCount - 1 });
   const taskCount = allTasksCompleted ? completedTasks : randNumber({ min: completedTasks + 1, max: maxTaskCount });
   const failedTasks = hasFailedTasks ? taskCount - completedTasks : 0;
@@ -39,7 +48,7 @@ export const createJob = (allTasksCompleted = false, hasFailedTasks = false): IJ
     version: randWord(),
     type: randWord(),
     description: randSentence(),
-    parameters: createJobParameters(),
+    parameters: createIngestionJobParameters(),
     reason: randSentence(),
     created: randWord(),
     updated: randWord(),
@@ -52,8 +61,20 @@ export const createJob = (allTasksCompleted = false, hasFailedTasks = false): IJ
   };
 };
 
-export const createJobs = (jobsAmount = randNumber({ min: 1, max: maxJobsNumber })): IJobResponse<IJobParameters, ITaskParameters>[] => {
-  const jobs: IJobResponse<IJobParameters, ITaskParameters>[] = [];
+export const createIngestionJobs = (
+  jobsAmount = randNumber({ min: 1, max: maxJobsNumber })
+): IJobResponse<IngestionJobParameters, ITaskParameters>[] => {
+  const jobs: IJobResponse<IngestionJobParameters, ITaskParameters>[] = [];
+  for (let index = 1; index < jobsAmount; index++) {
+    jobs.push(createJob(randBoolean()));
+  }
+  return jobs;
+};
+
+export const createDeleteJobs = (
+  jobsAmount = randNumber({ min: 1, max: maxJobsNumber })
+): IJobResponse<DeleteJobParameters, ITaskParameters>[] => {
+  const jobs: IJobResponse<DeleteJobParameters, ITaskParameters>[] = [];
   for (let index = 1; index < jobsAmount; index++) {
     jobs.push(createJob(randBoolean()));
   }

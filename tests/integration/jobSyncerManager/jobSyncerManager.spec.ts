@@ -5,7 +5,7 @@ import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { getApp } from '../../../src/app';
 import { SERVICES } from '../../../src/common/constants';
 import { JobSyncerManager } from '../../../src/jobSyncerManager/jobSyncer';
-import { createJob, createJobs, jobManagerClientMock } from '../../mocks/jobManagerMock';
+import { createJob,  createIngestionJobs, jobManagerClientMock } from '../../mocks/jobManagerMock';
 import { createFakeMetadata } from '../../mocks/catalogManagerMock';
 
 describe('jobSyncerManager', () => {
@@ -29,7 +29,7 @@ describe('jobSyncerManager', () => {
 
   describe('progressJobs', () => {
     it('When has completed job, it should insert the metadata to the catalog service', async () => {
-      const jobs = createJobs();
+      const jobs = createIngestionJobs();
       jobs.push(createJob(true));
       jobManagerClientMock.getJobs.mockResolvedValue(jobs);
       jobManagerClientMock.updateJob.mockResolvedValue(undefined);
@@ -45,7 +45,7 @@ describe('jobSyncerManager', () => {
     });
 
     it('When there is a problem with the catalog, it should update the job-manager', async () => {
-      const jobs = createJobs();
+      const jobs = createIngestionJobs();
       jobs.push(createJob(true));
       const completedJobsPosition: number[] = [];
       for (let index = 0; index < jobs.length; index++) {

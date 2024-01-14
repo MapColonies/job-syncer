@@ -9,7 +9,6 @@ export interface IngestionJobParameters {
 }
 
 export interface DeleteJobParameters {
-  metadata: any;
   modelId: string;
   pathToTileset: string;
   filesCount: number;
