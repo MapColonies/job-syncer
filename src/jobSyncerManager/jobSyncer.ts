@@ -4,8 +4,8 @@ import { IFindJobsRequest, IJobResponse, IUpdateJobBody, JobManagerClient, Opera
 import { IConfig } from 'config';
 import { inject, injectable } from 'tsyringe';
 import { CatalogManager } from '../catalogManager/catalogManager';
-import { JOB_TYPE, SERVICES } from '../common/constants';
-import { IJobParameters, ITaskParameters } from '../jobSyncerManager/interfaces';
+import { DELETE_JOB_TYPE, INGESTION_JOB_TYPE, SERVICES } from '../common/constants';
+import { DeleteJobParameters, IngestionJobParameters, ITaskParameters } from '../jobSyncerManager/interfaces';
 
 @injectable()
 export class JobSyncerManager {
@@ -18,62 +18,95 @@ export class JobSyncerManager {
 
   public async progressJobs(): Promise<void> {
     this.logger.debug({ msg: 'Starting job syncer' });
-    const jobs = await this.getInProgressJobs();
-
+    const ingestionJobs = await this.getIngestionInProgressJobs();
+    const deleteJobs = await this.getDeleteInProgressJobs();
+    const jobs = [...ingestionJobs, ...deleteJobs];
+  
     let catalogMetadata: Pycsw3DCatalogRecord | null = null;
-
+  
     for (const job of jobs) {
       let reason: string | null = null;
       let isCreateCatalogSuccess = true;
       const isJobCompleted = job.completedTasks === job.taskCount;
-
+  
       try {
         if (isJobCompleted) {
-          catalogMetadata = await this.catalogManagerClient.createCatalogMetadata(job.parameters);
-          this.logger.info({ msg: `Job: ${job.id} is completed`, modelId: job.parameters.modelId, modelName: job.parameters.metadata.productName });
+          // Check if the job type is INGESTION_JOB_TYPE
+          if (job.type === INGESTION_JOB_TYPE) {
+            catalogMetadata = await this.catalogManagerClient.createCatalogMetadata(job.parameters);
+            this.logger.info({
+              msg: `Ingestion Job: ${job.id} is completed`,
+              modelId: job.parameters.modelId,
+              modelName: job.productName,
+            });
+          }
+  
+          // Check if the job type is DELETE_JOB_TYPE
+          if (job.type === DELETE_JOB_TYPE) {
+            // Add your logic for DELETE_JOB_TYPE here
+            // Example: deleteMetadata = await this.someDeleteFunction(job.parameters);
+            this.logger.info({
+              msg: `Delete Job: ${job.id} is completed`,
+              // Add relevant properties here
+            });
+          }
         }
       } catch (error) {
-        this.logger.error({ msg: error, modelId: job.parameters.modelId, modelName: job.parameters.metadata.productName });
+        this.logger.error({ msg: error, modelId: job.parameters.modelId, modelName: job.productName });
         isCreateCatalogSuccess = false;
         reason = (error as Error).message;
       }
-
+  
       const status = this.getStatus(job, isJobCompleted, isCreateCatalogSuccess);
       const payload = this.buildPayload(job, status, reason);
-
+  
       try {
         await this.handleUpdateJob(job.id, payload);
       } catch (error) {
         await this.handleUpdateJobRejection(error, catalogMetadata);
       }
-
+  
       this.logger.debug({
         msg: 'Finished job syncer',
         jobId: job.id,
         modelId: job.parameters.modelId,
-        modelName: job.parameters.metadata.productName,
         payload,
       });
     }
   }
+  
 
-  private async getInProgressJobs(): Promise<IJobResponse<IJobParameters, ITaskParameters>[]> {
+  private async getIngestionInProgressJobs(): Promise<IJobResponse<IngestionJobParameters, ITaskParameters>[]> {
     const queryParams: IFindJobsRequest = {
       status: OperationStatus.IN_PROGRESS,
-      type: JOB_TYPE,
+      type: INGESTION_JOB_TYPE,
       // In newer version of job-manager, this is supposed to be default
       shouldReturnTasks: false,
     };
 
-    this.logger.debug({ msg: 'Starting getInProgressJobs', queryParams });
-    const jobs = await this.jobManagerClient.getJobs<IJobParameters, ITaskParameters>(queryParams);
-    this.logger.debug({ msg: 'Finishing getInProgressJobs', count: jobs.length });
+    this.logger.debug({ msg: 'Starting getIngestionInProgressJobs', queryParams });
+    const jobs = await this.jobManagerClient.getJobs<IngestionJobParameters, ITaskParameters>(queryParams);
+    this.logger.debug({ msg: 'Finishing getIngestionInProgressJobs', count: jobs.length });
     return jobs;
   }
 
-  private async handleUpdateJob(jobId: string, payload: IUpdateJobBody<IJobParameters>): Promise<void> {
+  private async getDeleteInProgressJobs(): Promise<IJobResponse<DeleteJobParameters, ITaskParameters>[]> {
+    const queryParams: IFindJobsRequest = {
+      status: OperationStatus.IN_PROGRESS,
+      type: DELETE_JOB_TYPE,
+      // In newer version of job-manager, this is supposed to be default
+      shouldReturnTasks: false,
+    };
+
+    this.logger.debug({ msg: 'Starting getDeleteInProgressJobs', queryParams });
+    const jobs = await this.jobManagerClient.getJobs<DeleteJobParameters, ITaskParameters>(queryParams);
+    this.logger.debug({ msg: 'Finishing getDeleteInProgressJobs', count: jobs.length });
+    return jobs;
+  }
+
+  private async handleUpdateJob(jobId: string, payload: IUpdateJobBody<IngestionJobParameters | DeleteJobParameters>): Promise<void> {
     this.logger.debug({ msg: 'Starting updateJob', jobId });
-    await this.jobManagerClient.updateJob<IJobParameters>(jobId, payload);
+    await this.jobManagerClient.updateJob<IngestionJobParameters | DeleteJobParameters>(jobId, payload);
     this.logger.debug({ msg: 'Done updateJob', jobId });
   }
 
@@ -89,11 +122,11 @@ export class JobSyncerManager {
   }
 
   private buildPayload(
-    job: IJobResponse<IJobParameters, ITaskParameters>,
+    job: IJobResponse<IngestionJobParameters | DeleteJobParameters, ITaskParameters>,
     status: OperationStatus,
     reason: string | null
-  ): IUpdateJobBody<IJobParameters> {
-    const payload: IUpdateJobBody<IJobParameters> = {
+  ): IUpdateJobBody<IngestionJobParameters | DeleteJobParameters> {
+    const payload: IUpdateJobBody<IngestionJobParameters | DeleteJobParameters> = {
       // eslint-disable-next-line @typescript-eslint/no-magic-numbers
       percentage: parseInt(((job.completedTasks / job.taskCount) * 100).toString()),
       status,
@@ -106,7 +139,7 @@ export class JobSyncerManager {
     return payload;
   }
 
-  private getStatus(job: IJobResponse<IJobParameters, ITaskParameters>, isJobCompleted: boolean, isCreateCatalogSuccess: boolean): OperationStatus {
+  private getStatus(job: IJobResponse<IngestionJobParameters | DeleteJobParameters, ITaskParameters>, isJobCompleted: boolean, isCreateCatalogSuccess: boolean): OperationStatus {
     const isJobNeedToFail = job.failedTasks > 0 && job.inProgressTasks === 0 && job.pendingTasks === 0;
 
     if (!isCreateCatalogSuccess || isJobNeedToFail) {

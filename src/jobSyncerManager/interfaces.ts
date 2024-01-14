@@ -1,11 +1,18 @@
 import { Layer3DMetadata } from '@map-colonies/mc-model-types';
 
-export interface IJobParameters {
+export interface IngestionJobParameters {
   metadata: Layer3DMetadata;
   modelId: string;
   tilesetFilename: string;
   filesCount: number;
   pathToTileset: string;
+}
+
+export interface DeleteJobParameters {
+  metadata: any;
+  modelId: string;
+  pathToTileset: string;
+  filesCount: number;
 }
 
 export interface ITaskParameters {

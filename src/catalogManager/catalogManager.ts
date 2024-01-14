@@ -3,7 +3,7 @@ import { Logger } from '@map-colonies/js-logger';
 import { I3DCatalogUpsertRequestBody, Link, Pycsw3DCatalogRecord } from '@map-colonies/mc-model-types';
 import axios from 'axios';
 import { IConfig } from '../common/interfaces';
-import { IJobParameters } from '../jobSyncerManager/interfaces';
+import { IngestionJobParameters } from '../jobSyncerManager/interfaces';
 import { SERVICES } from '../common/constants';
 
 @injectable()
@@ -16,7 +16,7 @@ export class CatalogManager {
     this.link = this.config.get<Link>('catalog.link');
   }
 
-  public async createCatalogMetadata(jobParameters: IJobParameters): Promise<Pycsw3DCatalogRecord> {
+  public async createCatalogMetadata(jobParameters: IngestionJobParameters): Promise<Pycsw3DCatalogRecord> {
     if (this.link.url == undefined) {
       throw new Error('link must have a url!');
     }
