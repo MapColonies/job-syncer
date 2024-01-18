@@ -44,7 +44,7 @@ export class JobSyncerManager {
             catalogMetadata = await this.catalogManagerClient.deleteMetadata((job as IJobResponse<DeleteJobParameters, ITaskParameters>).parameters);
             this.logger.info({
               msg: `Delete Job: ${job.id} is completed`,
-              modelId: job.resourceId,
+              modelId: job.parameters.modelId,
               modelName: job.productName,
             });
           }
@@ -67,17 +67,26 @@ export class JobSyncerManager {
       this.logger.debug({
         msg: 'Finished job syncer',
         jobId: job.id,
-        modelId: job.parameters.modelId,
+        modelId: job.resourceId,
         payload,
       });
     }
   }
 
+  public async handleUpdateJobRejection(error: unknown, catalogMetadata: Pycsw3DCatalogRecord | null): Promise<void> {
+    if (catalogMetadata?.id !== undefined) {
+      await this.catalogManagerClient.deleteCatalogMetadata(catalogMetadata.id);
+    }
+
+    if (error instanceof Error) {
+      this.logger.error({ error, msg: 'Failed to updateJob', stack: error.stack });
+      throw error;
+    }
+  }
   private async getIngestionInProgressJobs(): Promise<IJobResponse<IngestionJobParameters, ITaskParameters>[]> {
     const queryParams: IFindJobsRequest = {
       status: OperationStatus.IN_PROGRESS,
       type: INGESTION_JOB_TYPE,
-      // In newer version of job-manager, this is supposed to be default
       shouldReturnTasks: false,
     };
 
@@ -91,7 +100,6 @@ export class JobSyncerManager {
     const queryParams: IFindJobsRequest = {
       status: OperationStatus.IN_PROGRESS,
       type: DELETE_JOB_TYPE,
-      // In newer version of job-manager, this is supposed to be default
       shouldReturnTasks: false,
     };
 
@@ -105,17 +113,6 @@ export class JobSyncerManager {
     this.logger.debug({ msg: 'Starting updateJob', jobId });
     await this.jobManagerClient.updateJob<IngestionJobParameters | DeleteJobParameters>(jobId, payload);
     this.logger.debug({ msg: 'Done updateJob', jobId });
-  }
-
-  private async handleUpdateJobRejection(error: unknown, catalogMetadata: Pycsw3DCatalogRecord | null): Promise<void> {
-    if (catalogMetadata?.id !== undefined) {
-      await this.catalogManagerClient.deleteCatalogMetadata(catalogMetadata.id);
-    }
-
-    if (error instanceof Error) {
-      this.logger.error({ error, msg: 'Failed to updateJob', stack: error.stack });
-      throw error;
-    }
   }
 
   private buildPayload(
