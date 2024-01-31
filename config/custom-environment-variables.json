@@ -23,8 +23,8 @@
   "jobManager": {
     "url": "JOB_MANAGER_URL",
     "jobType": {
-      "ingestion": "INGESTION_JOB",
-      "delete": "DELETE_JOB"
+      "ingestion": "INGESTION_JOB_TYPE",
+      "delete": "DELETE_JOB_TYPE"
     }
   },
   "catalog": {
