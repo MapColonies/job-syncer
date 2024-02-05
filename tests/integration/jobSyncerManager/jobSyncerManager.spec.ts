@@ -74,5 +74,34 @@ describe('jobSyncerManager', () => {
         );
       }
     });
+
+    it('When there is a problem with job-manager, it should throw an error', async () => {
+      const job = [createJob(false)];
+      jobManagerClientMock.getJobs.mockResolvedValue(job);
+      jobManagerClientMock.updateJob.mockRejectedValue(new Error('problem'));
+
+      const response = jobSyncerManager.progressJobs();
+
+      await expect(response).rejects.toThrow(Error);
+      expect(mockAxios.post).not.toHaveBeenCalled();
+      expect(mockAxios.delete).not.toHaveBeenCalled();
+      expect(jobManagerClientMock.getJobs).toHaveBeenCalled();
+      expect(jobManagerClientMock.updateJob).toHaveBeenCalled();
+    });
+
+    it('When there is a problem with job-manager, it should remove the new record from DB', async () => {
+      const job = [createJob(true)];
+      jobManagerClientMock.getJobs.mockResolvedValue(job);
+      jobManagerClientMock.updateJob.mockRejectedValue(new Error('problem'));
+      mockAxios.post.mockResolvedValue({ data: createFakeMetadata });
+      mockAxios.delete.mockResolvedValue({ data: createFakeMetadata });
+
+      const response = jobSyncerManager.progressJobs();
+
+      await expect(response).rejects.toThrow(Error);
+      expect(mockAxios.delete).toHaveBeenCalled();
+      expect(jobManagerClientMock.getJobs).toHaveBeenCalled();
+      expect(jobManagerClientMock.updateJob).toHaveBeenCalled();
+    });
   });
 });
