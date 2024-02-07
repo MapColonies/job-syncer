@@ -17,9 +17,6 @@ export class CatalogManager {
   }
 
   public async createCatalogMetadata(jobParameters: IJobParameters): Promise<Pycsw3DCatalogRecord> {
-    if (this.link.url == undefined) {
-      throw new Error('link must have a url!');
-    }
     const pathToTileset = jobParameters.pathToTileset.replace(/^[^/]+/, jobParameters.modelId);
     const links: Link[] = [{ ...this.link, url: `${this.link.url}/${pathToTileset}/${jobParameters.tilesetFilename}` }];
     const metadata: I3DCatalogUpsertRequestBody = {
