@@ -11,7 +11,7 @@ import { IJobParameters } from '../../../src/jobSyncerManager/interfaces';
 describe('jobSyncerManager', () => {
   let jobSyncerManager: JobSyncerManager;
 
-  beforeAll(() => {
+  beforeEach(() => {
     getApp({
       override: [
         { token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false }) } },
@@ -28,6 +28,16 @@ describe('jobSyncerManager', () => {
   });
 
   describe('progressJobs', () => {
+    it('When need to start a new job but has already an active one, it should not start the job', async () => {
+      jobSyncerManager['isActive'] = true;
+
+      await jobSyncerManager.progressJobs();
+
+      expect(jobManagerClientMock.updateJob).not.toHaveBeenCalled();
+      expect(catalogManagerClientMock.createCatalogMetadata).not.toHaveBeenCalled();
+      expect(jobManagerClientMock.getJobs).not.toHaveBeenCalled();
+    });
+
     it('When does not have in-progress jobs, should do nothing', async () => {
       jobManagerClientMock.getJobs.mockResolvedValue([]);
       jobManagerClientMock.updateJob.mockResolvedValue(undefined);

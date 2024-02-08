@@ -20,6 +20,9 @@
       "interval": "TELEMETRY_METRICS_INTERVAL"
     }
   },
+  "jobSyncer": {
+    "intervalMs": "JOB_SYNCER_INTERVAL_MS"
+  },
   "jobManager": {
     "url": "JOB_MANAGER_URL",
     "jobType": "JOB_TYPE"

@@ -11,7 +11,7 @@ import { createFakeMetadata } from '../../mocks/catalogManagerMock';
 describe('jobSyncerManager', () => {
   let jobSyncerManager: JobSyncerManager;
 
-  beforeAll(() => {
+  beforeEach(() => {
     getApp({
       override: [
         { token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false }) } },
@@ -28,6 +28,16 @@ describe('jobSyncerManager', () => {
   });
 
   describe('progressJobs', () => {
+    it('When has an active job, it should not start another job', async () => {
+      jobSyncerManager['isActive'] = true;
+
+      await jobSyncerManager.progressJobs();
+
+      expect(jobManagerClientMock.getJobs).not.toHaveBeenCalled();
+      expect(jobManagerClientMock.updateJob).not.toHaveBeenCalled();
+      expect(mockAxios.post).not.toHaveBeenCalled();
+    });
+
     it('When has completed job, it should insert the metadata to the catalog service', async () => {
       const jobs = createJobs();
       jobs.push(createJob(true));

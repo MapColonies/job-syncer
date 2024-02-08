@@ -9,15 +9,24 @@ import { IJobParameters, ITaskParameters } from '../jobSyncerManager/interfaces'
 
 @injectable()
 export class JobSyncerManager {
+  private isActive: boolean;
+
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
     @inject(SERVICES.JOB_MANAGER_CLIENT) private readonly jobManagerClient: JobManagerClient,
     @inject(SERVICES.CATALOG_MANAGER) private readonly catalogManagerClient: CatalogManager
-  ) {}
+  ) {
+    this.isActive = false;
+  }
 
   public async progressJobs(): Promise<void> {
-    this.logger.debug({ msg: 'Starting job syncer' });
+    if (this.isActive) {
+      return;
+    }
+    this.isActive = true;
+
+    this.logger.debug({ msg: `Getting In-Progress jobs` });
     const jobs = await this.getInProgressJobs();
 
     let catalogMetadata: Pycsw3DCatalogRecord | null = null;
@@ -55,6 +64,8 @@ export class JobSyncerManager {
         payload,
       });
     }
+
+    this.isActive = false;
   }
 
   private async getInProgressJobs(): Promise<IJobResponse<IJobParameters, ITaskParameters>[]> {
