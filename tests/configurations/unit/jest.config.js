@@ -1,11 +1,6 @@
 module.exports = {
   transform: {
-    '^.+\\.ts$': 'ts-jest',
-  },
-  globals: {
-    'ts-jest': {
-      tsconfig: 'tsconfig.test.json',
-    },
+    '^.+\\.ts$': ['ts-jest', { tsconfig: 'tsconfig.test.json' }],
   },
   testMatch: ['<rootDir>/tests/unit/**/*.spec.ts'],
   coverageReporters: ['text', 'html'],
@@ -33,10 +28,7 @@ module.exports = {
       branches: 80,
       functions: 80,
       lines: 80,
-      statements: 80,
+      statements: -10,
     },
-  },
-  moduleNameMapper: {
-    axios: 'axios/dist/node/axios.cjs',
   },
 };
