@@ -1,0 +1,95 @@
+{{- $releaseName := .Release.Name -}}
+{{- $chartName := include "job-syncer.name" . -}}
+{{- $cloudProviderFlavor := include "job-syncer.cloudProviderFlavor" . -}}
+{{- $cloudProviderDockerRegistryUrl := include "job-syncer.cloudProviderDockerRegistryUrl" . -}}
+{{- $cloudProviderImagePullSecretName := include "job-syncer.cloudProviderImagePullSecretName" . -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $releaseName }}-job-syncer
+  labels:
+    app: {{ $chartName }}
+    component: {{ $chartName }}
+    environment: {{ include "job-syncer.environment" . }}
+    release: {{ $releaseName }}-{{ $chartName }}
+    {{- include "job-syncer.labels" . | nindent 4 }}
+{{- if .Values.global.ingestion.splunk.enabled }}
+{{- with .Values.global.ingestion.splunk.annotations }}
+  annotations:
+{{ toYaml . | indent 4 }}
+{{- end }}
+{{- end }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: job-syncer
+      release: {{ $releaseName }}
+      run: {{ $releaseName }}-job-syncer
+      {{- include "job-syncer.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: job-syncer
+        release: {{ $releaseName }}
+        run: {{ $releaseName }}-job-syncer
+        {{- include "job-syncer.selectorLabels" . | nindent 8 }}
+      {{- if .Values.resetOnConfigChange }}
+      annotations:
+        checksum/configmap: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+      {{- end }}
+    spec:
+      {{- if $cloudProviderImagePullSecretName }}
+      imagePullSecrets:
+        - name: {{ $cloudProviderImagePullSecretName | quote }}
+      {{- end }}
+      containers:
+        - name: {{ $releaseName }}-job-syncer-deployment
+          {{- with .Values.image }}
+          image: {{ $cloudProviderDockerRegistryUrl }}{{ .repository }}:{{ .tag }}
+          {{- end }}
+          volumeMounts:
+            {{- if .Values.global.ca.enabled }}
+            - mountPath: {{ printf "%s/%s" .Values.global.ca.path .Values.global.ca.key | quote }}
+              name: root-ca
+              subPath: {{ quote .Values.global.ca.key }}
+            {{- end }}
+            {{- if .Values.global.filebeat.enabled }}
+            - name: logs
+              mountPath: {{ .Values.global.filebeat.mountPath }}
+            {{- end }}
+          envFrom:
+            - configMapRef:
+                name: {{ .Release.Name }}-{{ $chartName }}-configmap
+            - configMapRef:
+                name: {{ $releaseName }}-ingestion-configmap
+          {{- if .Values.resources.enabled }}
+          resources:
+            {{- toYaml .Values.resources.value | nindent 12 }}
+          {{- end }}
+        {{- if .Values.global.filebeat.enabled }}
+          command: ["/bin/sh", "-c", "node --max_old_space_size=512 ./index.js >> /usr/src/app/logs/log.log 2>&1"]
+        - name: filebeat
+          image: {{ .Values.global.filebeat.image }}
+          args: [ "-c", "/etc/filebeat.yml", "-e" ]
+          volumeMounts:
+            - name: logs
+              mountPath: {{ .Values.global.filebeat.mountPath }}
+            - name: config
+              mountPath: /etc/filebeat.yml
+              subPath: filebeat.yml
+        {{- end }}
+      volumes:
+        {{- if .Values.global.ca.enabled }}
+        - name: root-ca
+          secret:
+            secretName: {{ .Values.global.ca.secretName }}
+        {{- end }}
+        {{- if .Values.global.filebeat.enabled }}
+        - name: logs
+          emptyDir: {}
+        - name: config
+          configMap:
+            name: filebeat-config-{{ .Release.Name }}
+        {{- end }}
+      terminationGracePeriodSeconds: 30
