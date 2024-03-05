@@ -1,4 +1,23 @@
 global:
+  filebeat:
+    enabled: false
+    image: docker.elastic.co/beats/filebeat:7.12.1
+    mountPath: /usr/src/app/logs
+    pycsw:
+      mountPath: /var/log/pycsw
+      logFile: pycsw.log
+    nginxS3Gateway: 
+      mountPath: /var/log/nginx
+    elastic:
+      host: 10.8.0.8
+      port: 9200
+      protocol: http
+      username: 
+      password:
+      index: 3d-np
+      sslEnabled: false
+    kibana:
+      host: 10.8.0.8:5601
   ingestion:
     job:
       type: Ingestion_New_3D
@@ -13,7 +32,7 @@ global:
       collectord.io/logs-output: splunk
 
 filebeat:
-  enabled: true
+  enabled: false
   image: docker.elastic.co/beats/filebeat:7.12.1
   mountPath: ''
   pycsw:
