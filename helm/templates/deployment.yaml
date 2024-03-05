@@ -13,8 +13,9 @@ metadata:
     environment: {{ include "job-syncer.environment" . }}
     release: {{ $releaseName }}-{{ $chartName }}
     {{- include "job-syncer.labels" . | nindent 4 }}
-{{- if .Values.global.ingestion.splunk.enabled }}
-{{- with .Values.global.ingestion.splunk.annotations }}
+    {{- $splunk := (include "common.splunk.merged" . ) | fromYaml }}
+{{- if $splunk.enabled }}
+{{- with $splunk.annotations }}
   annotations:
 {{ toYaml . | indent 4 }}
 {{- end }}
@@ -49,43 +50,46 @@ spec:
           image: {{ $cloudProviderDockerRegistryUrl }}{{ .repository }}:{{ .tag }}
           {{- end }}
           volumeMounts:
-            {{- if .Values.global.ca.enabled }}
-            - mountPath: {{ printf "%s/%s" .Values.global.ca.path .Values.global.ca.key | quote }}
+          {{-  $ca := (include "common.ca.merged" . ) | fromYaml }}
+            {{- if $ca.enabled }}
+            - mountPath: {{ printf "%s/%s" $ca.path $ca.key | quote }}
               name: root-ca
-              subPath: {{ quote .Values.global.ca.key }}
+              subPath: {{ quote $ca.key }}
             {{- end }}
-            {{- if .Values.global.filebeat.enabled }}
+            {{-  $filebeat := (include "common.filebeat.merged" . ) | fromYaml }}
+            {{- if $filebeat.enabled }}
             - name: logs
-              mountPath: {{ .Values.global.filebeat.mountPath }}
+              mountPath: {{ $filebeat.mountPath }}
             {{- end }}
           envFrom:
             - configMapRef:
                 name: {{ .Release.Name }}-{{ $chartName }}-configmap
             - configMapRef:
-                name: {{ $releaseName }}-ingestion-configmap
+                name: {{ $releaseName }}-{{ $chartName }}-configmap
           {{- if .Values.resources.enabled }}
           resources:
             {{- toYaml .Values.resources.value | nindent 12 }}
           {{- end }}
-        {{- if .Values.global.filebeat.enabled }}
+        {{- if $filebeat.enabled }}
           command: ["/bin/sh", "-c", "node --max_old_space_size=512 ./index.js >> /usr/src/app/logs/log.log 2>&1"]
         - name: filebeat
-          image: {{ .Values.global.filebeat.image }}
+          image: {{ $filebeat.image }}
           args: [ "-c", "/etc/filebeat.yml", "-e" ]
           volumeMounts:
             - name: logs
-              mountPath: {{ .Values.global.filebeat.mountPath }}
+              mountPath: {{ $filebeat.mountPath }}
             - name: config
               mountPath: /etc/filebeat.yml
               subPath: filebeat.yml
         {{- end }}
       volumes:
-        {{- if .Values.global.ca.enabled }}
+      {{-  $ca := (include "common.ca.merged" . ) | fromYaml }}
+        {{- if $ca.enabled }}
         - name: root-ca
           secret:
-            secretName: {{ .Values.global.ca.secretName }}
+            secretName: {{ $ca.secretName }}
         {{- end }}
-        {{- if .Values.global.filebeat.enabled }}
+        {{- if $filebeat.enabled }}
         - name: logs
           emptyDir: {}
         - name: config

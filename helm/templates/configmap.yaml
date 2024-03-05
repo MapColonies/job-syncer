@@ -16,9 +16,10 @@ data:
   TELEMETRY_METRICS_ENABLED: 'true'
   TELEMETRY_METRICS_URL: {{ $metricsUrl }}
   {{ end }}
-  {{- if .Values.global.ca.enabled }}
-  REQUESTS_CA_BUNDLE: {{ printf "%s/%s" .Values.global.ca.path .Values.global.ca.key | quote }}
-  NODE_EXTRA_CA_CERTS: {{ printf "%s/%s" .Values.global.ca.path .Values.global.ca.key | quote }}
+  {{-  $ca := (include "common.ca.merged" . ) | fromYaml }}
+  {{- if $ca.enabled }}
+  REQUESTS_CA_BUNDLE: {{ printf "%s/%s" $ca.path $ca.key | quote }}
+  NODE_EXTRA_CA_CERTS: {{ printf "%s/%s" $ca.path $ca.key | quote }}
   {{- end }}
   JOB_SYNCER_INTERVAL_MS: {{ .Values.env.intervalMS | quote }}
   CATALOG_URL: http://{{ .Release.Name }}-catalog
@@ -26,3 +27,7 @@ data:
   LINK_DESCRIPTION: {{ .Values.env.catalog.link.description | quote }}
   LINK_URL: {{ .Values.env.catalog.link.url | quote }}
   LINK_PROTOCOL: {{ .Values.env.catalog.link.protocol | quote }}
+  {{- $jobManager := (include "common.jobManager.merged" . ) | fromYaml }}
+  JOB_MANAGER_URL: {{ $jobManager.url | quote }}
+  {{- $job := (include "common.job.merged" . ) | fromYaml }}
+  JOB_TYPE: {{ $job.type | quote }}

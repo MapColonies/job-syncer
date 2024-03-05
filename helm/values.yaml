@@ -1,0 +1,95 @@
+global:
+  ingestion:
+    job:
+      type: Ingestion_New_3D
+
+    jobManager:
+      url: http://common-job-manager
+
+    splunk:
+    enabled: false
+    annotations:
+      collectord.io/index: SPLUNK_INDEX
+      collectord.io/logs-output: splunk
+
+filebeat:
+  enabled: true
+  image: docker.elastic.co/beats/filebeat:7.12.1
+  mountPath: ''
+  pycsw:
+    mountPath: ''
+    logFile: ''
+  nginxS3Gateway: 
+    mountPath: ''
+  elastic:
+    host: 10.8.0.8
+    port: 9200
+    protocol: http
+    username: 
+    password:
+    index: ''
+    sslEnabled: false
+  kibana:
+    host: ''
+
+sidecars:
+  filebeat:
+    name: filebeat
+    image: docker.elastic.co/beats/filebeat:7.12.1
+    args: [ "-c", "/etc/filebeat.yml", "-e" ]
+    volumeMounts:
+      - name: ''
+        mountPath: ''
+      - name: ''
+        mountPath: ''
+        subPath: ''
+
+ca:
+  enabled: false
+  useExternal: true
+  secretName: ''
+  path: /
+  key: ''
+
+ingestion:   
+  job:
+    type: Ingestion_New_3D
+
+  jobManager:
+    url: http://common-job-manager
+       
+  splunk:
+    enabled: true
+    annotations:
+      collectord.io/index: ''
+      collectord.io/logs-output: ''
+
+replicaCount: 1
+image:
+  repository: job-syncer
+  tag: ''
+env:
+  logLevel: info
+  logPrettyPrintEnabled: false
+  tracing:
+    enabled: false
+    url: 'http://localhost:55681/v1/trace'
+  metrics:
+    enabled: false
+    url: 'http://localhost:55681/v1/metrics'
+  intervalMS: 30000
+  catalog:
+    link:
+      name: ""
+      description: ""
+      protocol: ''
+      url: https://serving-nginx-s3-gateway-route-3d-dev.apps.j1lk3njp.eastus.aroapp.io/api/3d/v1/b3dm
+resources:
+  enabled: true
+  value:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
