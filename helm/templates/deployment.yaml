@@ -56,11 +56,6 @@ spec:
               name: root-ca
               subPath: {{ quote $ca.key }}
             {{- end }}
-            {{-  $filebeat := (include "common.filebeat.merged" . ) | fromYaml }}
-            {{- if $filebeat.enabled }}
-            - name: logs
-              mountPath: {{ $filebeat.mountPath }}
-            {{- end }}
           envFrom:
             - configMapRef:
                 name: {{ .Release.Name }}-{{ $chartName }}-configmap
@@ -70,30 +65,11 @@ spec:
           resources:
             {{- toYaml .Values.resources.value | nindent 12 }}
           {{- end }}
-        {{- if $filebeat.enabled }}
-          command: ["/bin/sh", "-c", "node --max_old_space_size=512 ./index.js >> /usr/src/app/logs/log.log 2>&1"]
-        - name: filebeat
-          image: {{ $filebeat.image }}
-          args: [ "-c", "/etc/filebeat.yml", "-e" ]
-          volumeMounts:
-            - name: logs
-              mountPath: {{ $filebeat.mountPath }}
-            - name: config
-              mountPath: /etc/filebeat.yml
-              subPath: filebeat.yml
-        {{- end }}
       volumes:
       {{-  $ca := (include "common.ca.merged" . ) | fromYaml }}
         {{- if $ca.enabled }}
         - name: root-ca
           secret:
             secretName: {{ $ca.secretName }}
-        {{- end }}
-        {{- if $filebeat.enabled }}
-        - name: logs
-          emptyDir: {}
-        - name: config
-          configMap:
-            name: filebeat-config-{{ .Release.Name }}
         {{- end }}
       terminationGracePeriodSeconds: 30
