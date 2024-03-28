@@ -1,38 +1,69 @@
 global:
-  cloudProvider: {}
-  tracing: {}
-  metrics: {}
-  environment: {}
+  ingestion:
+    job:
+      type: 
 
-enabled: true
-environment: development
+    jobManager:
+      url: 
 
-cloudProvider:
-  dockerRegistryUrl: acrarolibotnonprod.azurecr.io
-  imagePullSecretName: 'my-registry-secret'
-  flavor: openshift
+    splunk:
+    enabled: false
+    annotations:
+      collectord.io/index: SPLUNK_INDEX
+      collectord.io/logs-output: splunk
 
+ca:
+  enabled: false
+  useExternal: true
+  secretName: ''
+  path: 
+  key: ''
+
+ingestion:   
+  job: 
+    type: ''
+
+
+# Add side car to the Deployment, for example
+# sidecars: |-
+#   - name: sidecar
+#     image: "{{ .Values.sidecar.image }}:{{ .Values.sidecar.imageTag }}"
+#     volumeMounts: []
+#     args: []
+#     ports: []
+#     resources:
+#     {{- toYaml .Values.sidecar.resources.value | nindent 12 }}
+sidecars: ''
+
+  jobManager:
+    url: ''
+       
+  splunk:
+    enabled: true
+    annotations:
+      collectord.io/index: ''
+      collectord.io/logs-output: ''
+
+replicaCount: 1
 image:
-  repository: 3d-job-syncer
-  tag: 1.0.0
-
-cron:
-  schedule:  '* * * * *'
-  successfulJobsHistoryLimit: 1
-  failedJobsHistoryLimit: 3
-  concurrencyPolicy: Forbid
-  restartPolicy: OnFailure
-
+  repository: job-syncer
+  tag: 'v2.0.0'
 env:
   logLevel: info
   logPrettyPrintEnabled: false
   tracing:
     enabled: false
-    url: http://localhost:55681/v1/trace
+    url: 'http://localhost:55681/v1/trace'
   metrics:
     enabled: false
-    url: http://localhost:55681/v1/metrics
-
+    url: 'http://localhost:55681/v1/metrics'
+  intervalMS: 30000
+  catalog:
+    link:
+      name: ""
+      description: ""
+      protocol: ''
+      url: 
 resources:
   enabled: true
   value:
@@ -42,4 +73,3 @@ resources:
     requests:
       cpu: 100m
       memory: 128Mi
-

@@ -1,6 +1,5 @@
 apiVersion: v2
-name: 3d-job-syncer
-description: A Helm chart for 3d-job-syncer cron job
-type: application
-version: 1.0.0
-appVersion: 1.0.0
+name: job-syncer
+description: A Helm chart for Kubernetes of the Catalogue Server (CS)
+version: 2.0.0
+appVersion: 2.0.0
