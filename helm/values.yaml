@@ -1,16 +1,16 @@
 global:
   ingestion:
     job:
-      type: 
+      type: ''
 
     jobManager:
-      url: 
+      url: ''
 
     splunk:
-    enabled: false
-    annotations:
-      collectord.io/index: SPLUNK_INDEX
-      collectord.io/logs-output: splunk
+      enabled: false
+      annotations:
+        collectord.io/index: SPLUNK_INDEX
+        collectord.io/logs-output: splunk
 
 ca:
   enabled: false
@@ -23,21 +23,19 @@ ingestion:
   job: 
     type: ''
 
-
-# Add side car to the Deployment, for example
-# sidecars: |-
-#   - name: sidecar
-#     image: "{{ .Values.sidecar.image }}:{{ .Values.sidecar.imageTag }}"
-#     volumeMounts: []
-#     args: []
-#     ports: []
-#     resources:
-#     {{- toYaml .Values.sidecar.resources.value | nindent 12 }}
-sidecars: ''
+  # Add side car to the Deployment, for example
+  # sidecars: |-
+  #   - name: sidecar
+  #     image: "{{ .Values.sidecar.image }}:{{ .Values.sidecar.imageTag }}"
+  #     volumeMounts: []
+  #     args: []
+  #     ports: []
+  #     resources:
+  #     {{- toYaml .Values.sidecar.resources.value | nindent 12 }}
+  sidecars: ''
 
   jobManager:
-    url: ''
-       
+    url: ''   
   splunk:
     enabled: true
     annotations:
