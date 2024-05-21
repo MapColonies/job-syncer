@@ -37,7 +37,7 @@ export class App {
     this.logger.info({ msg: 'Starting jobSyncer' });
 
     this.serverInstance.listen(this.port, () => {
-      this.logger.info(`Liveness endpoint running at http://localhost:${this.port}/liveness`);
+      this.logger.info(`app started on port ${this.port}`);
     });
 
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
