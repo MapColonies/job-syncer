@@ -1,1 +1,7 @@
-{}
+{
+  "telemetry": {
+    "metrics": {
+      "enabled": true
+    }
+  }
+}

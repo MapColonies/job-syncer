@@ -13,8 +13,6 @@ export const SERVICES: Record<string, symbol> = {
   LOGGER: Symbol('Logger'),
   CONFIG: Symbol('Config'),
   TRACER: Symbol('Tracer'),
-  METER: Symbol('Meter'),
-  METRICS: Symbol('Metrics'),
   JOB_MANAGER_CLIENT: Symbol('JobManagerClient'),
   JOB_SYNCER_MANAGER: Symbol('JobSyncerManager'),
   CATALOG_MANAGER: Symbol('CatalogManager'),

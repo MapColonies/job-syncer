@@ -1,7 +1,9 @@
 import jsLogger, { LoggerOptions } from '@map-colonies/js-logger';
 import config from 'config';
-import { Metrics, logMethod } from '@map-colonies/telemetry';
+import { logMethod } from '@map-colonies/telemetry';
 import { trace } from '@opentelemetry/api';
+import { instanceCachingFactory } from 'tsyringe';
+import client from 'prom-client';
 import { DependencyContainer } from 'tsyringe/dist/typings/types';
 import { JobManagerClient } from '@map-colonies/mc-priority-queue';
 import { SERVICES, SERVICE_NAME } from './common/constants';
@@ -10,6 +12,7 @@ import { InjectionObject, registerDependencies } from './common/dependencyRegist
 import { JobManagerConfig } from './jobSyncerManager/interfaces';
 import { JobSyncerManager } from './jobSyncerManager/jobSyncer';
 import { CatalogManager } from './catalogManager/catalogManager';
+import { IConfig } from './common/interfaces';
 
 export interface RegisterOptions {
   override?: InjectionObject<unknown>[];
@@ -21,9 +24,6 @@ export const registerExternalValues = (options?: RegisterOptions): DependencyCon
   const logger = jsLogger({ ...loggerConfig, prettyPrint: loggerConfig.prettyPrint, hooks: { logMethod } });
   const jobConfig: JobManagerConfig = config.get<JobManagerConfig>('jobManager');
 
-  const metrics = new Metrics(SERVICE_NAME);
-  const meter = metrics.start();
-
   tracing.start();
   const tracer = trace.getTracer(SERVICE_NAME);
 
@@ -31,8 +31,21 @@ export const registerExternalValues = (options?: RegisterOptions): DependencyCon
     { token: SERVICES.CONFIG, provider: { useValue: config } },
     { token: SERVICES.LOGGER, provider: { useValue: logger } },
     { token: SERVICES.TRACER, provider: { useValue: tracer } },
-    { token: SERVICES.METER, provider: { useValue: meter } },
-    { token: SERVICES.METRICS, provider: { useValue: metrics } },
+    {
+      token: SERVICES.METRICS_REGISTRY,
+      provider: {
+        useFactory: instanceCachingFactory((container) => {
+          const config = container.resolve<IConfig>(SERVICES.CONFIG);
+
+          if (config.get<boolean>('telemetry.metrics.enabled')) {
+            client.register.setDefaultLabels({
+              app: SERVICE_NAME,
+            });
+            return client.register;
+          }
+        }),
+      },
+    },
     { token: SERVICES.JOB_MANAGER_CLIENT, provider: { useFactory: () => new JobManagerClient(logger, jobConfig.url) } },
     { token: SERVICES.JOB_SYNCER_MANAGER, provider: { useClass: JobSyncerManager } },
     { token: SERVICES.CATALOG_MANAGER, provider: { useClass: CatalogManager } },
