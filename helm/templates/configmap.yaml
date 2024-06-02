@@ -1,33 +1,34 @@
 {{- $chartName := include "job-syncer.name" . -}}
-{{- $tracingUrl := include "job-syncer.tracingUrl" . -}}
-{{- $metricsUrl := include "job-syncer.metricsUrl" . -}}
+{{- $fullName := include "job-syncer.fullname" . -}}
+{{- $ca := (include "merged.ca" . ) | fromYaml }}
+{{- $tracing := (include "merged.tracing" . ) | fromYaml }}
+{{- $metrics := (include "merged.metrics" . ) | fromYaml }}
+{{- $jobManager := (include "merged.jobManager" . ) | fromYaml }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Release.Name }}-{{ $chartName }}-configmap
+  name: {{ $fullName }}
 data:
   LOG_LEVEL: {{ .Values.env.logLevel | quote }}
   LOG_PRETTY_PRINT_ENABLED: {{ .Values.env.logPrettyPrintEnabled | quote }}
-  {{ if .Values.env.tracing.enabled }}
+  {{ if $tracing.enabled }}
   TELEMETRY_TRACING_ENABLED: 'true'
-  TELEMETRY_TRACING_URL: {{ $tracingUrl }}
+  TELEMETRY_TRACING_URL: {{ $tracing.url }}
   {{ end }}
-  {{ if .Values.env.metrics.enabled }}
+  {{ if $metrics.enabled }}
   TELEMETRY_METRICS_ENABLED: 'true'
-  TELEMETRY_METRICS_URL: {{ $metricsUrl }}
+  TELEMETRY_METRICS_URL: {{ $metrics.url }}
   {{ end }}
-  {{-  $ca := (include "common.ca.merged" . ) | fromYaml }}
   {{- if $ca.enabled }}
   REQUESTS_CA_BUNDLE: {{ printf "%s/%s" $ca.path $ca.key | quote }}
   NODE_EXTRA_CA_CERTS: {{ printf "%s/%s" $ca.path $ca.key | quote }}
   {{- end }}
   JOB_SYNCER_INTERVAL_MS: {{ .Values.env.intervalMS | quote }}
-  CATALOG_URL: http://{{ .Release.Name }}-catalog
+  CATALOG_URL: {{ .Values.env.catalog.url | default (printf "http://%s-catalog" .Release.Name) }}
   LINK_NAME: {{ .Values.env.catalog.link.name | quote }}
   LINK_DESCRIPTION: {{ .Values.env.catalog.link.description | quote }}
   LINK_URL: {{ .Values.env.catalog.link.url | quote }}
   LINK_PROTOCOL: {{ .Values.env.catalog.link.protocol | quote }}
-  {{- $jobManager := (include "common.jobManager.merged" . ) | fromYaml }}
   JOB_MANAGER_URL: {{ $jobManager.url | quote }}
-  {{- $job := (include "common.job.merged" . ) | fromYaml }}
-  JOB_TYPE: {{ $job.type | quote }}
+  JOB_TYPE: {{ $jobManager.job.type | quote }}
+  SERVER_PORT: {{ .Values.env.targetPort | quote }}

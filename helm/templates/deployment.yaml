@@ -1,42 +1,48 @@
 {{- $releaseName := .Release.Name -}}
 {{- $chartName := include "job-syncer.name" . -}}
+{{- $fullName := include "job-syncer.fullname" . -}}
 {{- $cloudProviderFlavor := include "job-syncer.cloudProviderFlavor" . -}}
-{{- $cloudProviderDockerRegistryUrl := include "job-syncer.cloudProviderDockerRegistryUrl" . -}}
+{{- $tag := include "job-syncer.tag" . -}}
 {{- $cloudProviderImagePullSecretName := include "job-syncer.cloudProviderImagePullSecretName" . -}}
+{{- $cloudProviderDockerRegistryUrl := include "job-syncer.cloudProviderDockerRegistryUrl" . -}}
+{{- $ca := (include "merged.ca" . ) | fromYaml }}
+{{- $podAnnotations := (include "merged.podAnnotations" . ) | fromYaml }}
+{{- $extraVolumes := (include "merged.extraVolumes" . ) | fromYaml }}
+{{- $extraVolumeMounts := (include "merged.extraVolumeMounts" . ) | fromYaml }}
+{{- $sidecars := (include "merged.sidecars" . ) | fromYaml }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ $releaseName }}-job-syncer
+  name: {{ $fullName }}
   labels:
     app: {{ $chartName }}
     component: {{ $chartName }}
     environment: {{ include "job-syncer.environment" . }}
-    release: {{ $releaseName }}-{{ $chartName }}
+    release: {{ $releaseName }}
     {{- include "job-syncer.labels" . | nindent 4 }}
-    {{- $splunk := (include "common.splunk.merged" . ) | fromYaml }}
-{{- if $splunk.enabled }}
-{{- with $splunk.annotations }}
-  annotations:
-{{ toYaml . | indent 4 }}
-{{- end }}
-{{- end }}
 spec:
   replicas: {{ .Values.replicaCount }}
+  revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
   selector:
     matchLabels:
-      app: job-syncer
+      app: {{ $chartName }}
       release: {{ $releaseName }}
-      run: {{ $releaseName }}-job-syncer
+      run: {{ $fullName }}
       {{- include "job-syncer.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        app: job-syncer
+        app: {{ $chartName }}
         release: {{ $releaseName }}
-        run: {{ $releaseName }}-job-syncer
+        run: {{ $fullName }}
         {{- include "job-syncer.selectorLabels" . | nindent 8 }}
-      {{- if .Values.resetOnConfigChange }}
       annotations:
+      {{- range $key, $value := $podAnnotations }}
+        {{- if $value.enabled }}
+          {{ toYaml $value.annotations }}
+        {{- end }}
+      {{- end }}
+      {{- if .Values.resetOnConfigChange }}
         checksum/configmap: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
       {{- end }}
     spec:
@@ -45,34 +51,53 @@ spec:
         - name: {{ $cloudProviderImagePullSecretName | quote }}
       {{- end }}
       containers:
-        - name: {{ $releaseName }}-job-syncer-deployment
+        - name: {{ $fullName }}-deployment
           {{- with .Values.image }}
-          image: {{ $cloudProviderDockerRegistryUrl }}{{ .repository }}:{{ .tag }}
+          image: {{ $cloudProviderDockerRegistryUrl }}{{ .repository }}:{{ $tag }}
           {{- end }}
           volumeMounts:
-          {{-  $ca := (include "common.ca.merged" . ) | fromYaml }}
             {{- if $ca.enabled }}
             - mountPath: {{ printf "%s/%s" $ca.path $ca.key | quote }}
               name: root-ca
               subPath: {{ quote $ca.key }}
             {{- end }}
+            {{- if $extraVolumeMounts -}}
+              {{ toYaml $extraVolumeMounts | nindent 12 }}
+            {{- end }}
           envFrom:
             - configMapRef:
-                name: {{ .Release.Name }}-{{ $chartName }}-configmap
-            - configMapRef:
-                name: {{ $releaseName }}-{{ $chartName }}-configmap
+                name: {{ $fullName }}
+          {{- if .Values.livenessProbe.enabled }}
+          livenessProbe:
+            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
+            httpGet:
+              path: {{ .Values.livenessProbe.path }}
+              port: {{ .Values.env.targetPort }}
+          {{- end }}
+          {{- if .Values.readinessProbe.enabled }}
+          readinessProbe:
+            initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
+            httpGet:
+              path: {{ .Values.readinessProbe.path }}
+              port: {{ .Values.env.targetPort }}
+          {{- end }}
           {{- if .Values.resources.enabled }}
           resources:
             {{- toYaml .Values.resources.value | nindent 12 }}
           {{- end }}
+        {{- if $sidecars }}
+        {{ tpl ($sidecars) . | nindent 8 }}
+        {{- end }}
       volumes:
-      {{-  $ca := (include "common.ca.merged" . ) | fromYaml }}
         {{- if $ca.enabled }}
         - name: root-ca
           secret:
             secretName: {{ $ca.secretName }}
         {{- end }}
-      terminationGracePeriodSeconds: 30
-      {{- if .Values.sidecars }}
-      {{ tpl (.Values.sidecars) . | nindent 8 }}
-      {{- end }}
+        {{- if $extraVolumes -}}
+          {{ tpl (toYaml $extraVolumes) . | nindent 8 }}
+        {{- end }}

@@ -1,67 +1,71 @@
 global:
-  ingestion:
+  cloudProvider:
+    dockerRegistryUrl: 
+    flavor: openshift
+    imagePullSecretName: 
+  imagePullPolicy: IfNotPresent
+  tracing: {}
+  metrics: {}
+  environment: development
+  
+  jobManager:
+    url: 
     job:
-      type: ''
+      type: 
 
-    jobManager:
-      url: ''
-
-    splunk:
-      enabled: false
-      annotations:
-        collectord.io/index: SPLUNK_INDEX
-        collectord.io/logs-output: splunk
+cloudProvider:
+    dockerRegistryUrl:
+    flavor: 
+    imagePullSecretName: 
+imagePullPolicy: 
+environment: 
 
 ca:
   enabled: false
-  useExternal: true
-  secretName: ''
+  useExternal: false
+  secretName: 
   path: 
-  key: ''
+  key: 
 
-ingestion:   
-  job: 
-    type: ''
-
-  # Add side car to the Deployment, for example
-  # sidecars: |-
-  #   - name: sidecar
-  #     image: "{{ .Values.sidecar.image }}:{{ .Values.sidecar.imageTag }}"
-  #     volumeMounts: []
-  #     args: []
-  #     ports: []
-  #     resources:
-  #     {{- toYaml .Values.sidecar.resources.value | nindent 12 }}
-  sidecars: ''
-
-  jobManager:
-    url: ''   
-  splunk:
-    enabled: true
-    annotations:
-      collectord.io/index: ''
-      collectord.io/logs-output: ''
+jobManager:
+  url: 
+  job:
+    type: 
 
 replicaCount: 1
+revisionHistoryLimit: 5 # Amount of revisions we keep
+
 image:
   repository: job-syncer
-  tag: 'v2.0.0'
+  tag: v2.1.0
+
+extraVolumes: {}
+
+extraVolumeMounts: {}
+
+sidecars: {}
+
+podAnnotations: {}
+
 env:
+  targetPort: 8080
   logLevel: info
   logPrettyPrintEnabled: false
   tracing:
     enabled: false
-    url: 'http://localhost:55681/v1/trace'
+    url: http://localhost:55681/v1/trace
   metrics:
     enabled: false
-    url: 'http://localhost:55681/v1/metrics'
+    url: http://localhost:55681/v1/metrics
   intervalMS: 30000
   catalog:
+    url:
     link:
-      name: ""
-      description: ""
-      protocol: ''
+      name: ''
+      description: ''
+      protocol: 3D_LAYER
       url: 
+
 resources:
   enabled: true
   value:
@@ -71,3 +75,17 @@ resources:
     requests:
       cpu: 100m
       memory: 128Mi
+
+livenessProbe:
+  enabled: true
+  initialDelaySeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 6
+  path: /liveness
+
+readinessProbe:
+  enabled: true
+  initialDelaySeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 6
+  path: /liveness

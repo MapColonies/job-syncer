@@ -36,27 +36,44 @@ Usage:
 {{- end -}}
 {{ $dst | toYaml }}
 {{- end -}}
-
 {{/*
 End of usage example
 */}}
 
 {{/*
-Custom definitions
+Common definitions
 */}}
-
-{{- define "common.splunk.merged" -}}
-{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.ingestion.splunk .Values.global.ingestion.splunk ) "context" . ) }}
-{{- end -}}
-
-{{- define "common.ca.merged" -}}
+{{- define "merged.ca" -}}
 {{- include "common.tplvalues.merge" ( dict "values" ( list .Values.ca .Values.global.ca ) "context" . ) }}
 {{- end -}}
 
-{{- define "common.jobManager.merged" -}}
-{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.ingestion.jobManager .Values.global.ingestion.jobManager ) "context" . ) }}
+{{- define "merged.podAnnotations" -}}
+{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.podAnnotations .Values.global.podAnnotations ) "context" . ) }}
 {{- end -}}
 
-{{- define "common.job.merged" -}}
-{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.ingestion.job .Values.global.ingestion.job ) "context" . ) }}
+{{- define "merged.extraVolumes" -}}
+{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.extraVolumes .Values.global.extraVolumes ) "context" . ) }}
+{{- end -}}
+
+{{- define "merged.sidecars" -}}
+{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.sidecars .Values.global.sidecars ) "context" . ) }}
+{{- end -}}
+
+{{- define "merged.extraVolumeMounts" -}}
+{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.extraVolumeMounts .Values.global.extraVolumeMounts ) "context" . ) }}
+{{- end -}}
+
+{{- define "merged.metrics" -}}
+{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.env.metrics .Values.global.metrics ) "context" . ) }}
+{{- end -}}
+
+{{- define "merged.tracing" -}}
+{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.env.tracing .Values.global.tracing ) "context" . ) }}
+{{- end -}}
+
+{{/*
+Custom definitions
+*/}}
+{{- define "merged.jobManager" -}}
+{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.jobManager .Values.global.jobManager ) "context" . ) }}
 {{- end -}}
