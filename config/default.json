@@ -4,8 +4,13 @@
       "level": "info",
       "prettyPrint": false
     },
+    "tracing": {
+      "enabled": true,
+      "url": "http://localhost:4318/v1/traces"
+    },
     "metrics": {
-      "enabled": true
+      "enabled": true,
+      "url": "http://localhost:4318/v1/metrics"
     }
   },
   "server": {

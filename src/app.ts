@@ -37,11 +37,11 @@ export class App {
     this.logger.info({ msg: 'Starting jobSyncer' });
 
     this.serverInstance.listen(this.port, () => {
-      this.logger.info(`app started on port ${this.port}`);
+      this.logger.info({ msg: `app started on port ${this.port}` });
     });
 
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
-    setInterval(async () => this.jobSyncerManager.progressJobs(), this.intervalMs);
+    setInterval(async () => this.jobSyncerManager.execute(), this.intervalMs);
   }
 }
 

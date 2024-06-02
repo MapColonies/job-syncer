@@ -1,6 +1,7 @@
 import { container } from 'tsyringe';
 import { IUpdateJobBody, OperationStatus } from '@map-colonies/mc-priority-queue';
 import jsLogger from '@map-colonies/js-logger';
+import { trace } from '@opentelemetry/api';
 import { getApp } from '../../../src/app';
 import { SERVICES } from '../../../src/common/constants';
 import { JobSyncerManager } from '../../../src/jobSyncerManager/jobSyncer';
@@ -15,6 +16,7 @@ describe('jobSyncerManager', () => {
     getApp({
       override: [
         { token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false }) } },
+        { token: SERVICES.TRACER, provider: { useValue: trace.getTracer('testTracer') } },
         { token: SERVICES.JOB_MANAGER_CLIENT, provider: { useValue: jobManagerClientMock } },
         { token: SERVICES.CATALOG_MANAGER, provider: { useValue: catalogManagerClientMock } },
       ],
@@ -27,11 +29,11 @@ describe('jobSyncerManager', () => {
     jest.clearAllMocks();
   });
 
-  describe('progressJobs', () => {
+  describe('execute', () => {
     it('When need to start a new job but has already an active one, it should not start the job', async () => {
       jobSyncerManager['isActive'] = true;
 
-      await jobSyncerManager.progressJobs();
+      await jobSyncerManager.execute();
 
       expect(jobManagerClientMock.updateJob).not.toHaveBeenCalled();
       expect(catalogManagerClientMock.createCatalogMetadata).not.toHaveBeenCalled();
@@ -42,7 +44,7 @@ describe('jobSyncerManager', () => {
       jobManagerClientMock.getJobs.mockResolvedValue([]);
       jobManagerClientMock.updateJob.mockResolvedValue(undefined);
 
-      await jobSyncerManager.progressJobs();
+      await jobSyncerManager.execute();
 
       expect(jobManagerClientMock.updateJob).not.toHaveBeenCalled();
       expect(catalogManagerClientMock.createCatalogMetadata).not.toHaveBeenCalled();
@@ -55,7 +57,7 @@ describe('jobSyncerManager', () => {
       jobManagerClientMock.updateJob.mockResolvedValue(undefined);
       catalogManagerClientMock.createCatalogMetadata.mockResolvedValue(createFakeMetadata);
 
-      await jobSyncerManager.progressJobs();
+      await jobSyncerManager.execute();
 
       expect(jobManagerClientMock.getJobs).toHaveBeenCalled();
       expect(jobManagerClientMock.updateJob).toHaveBeenCalledTimes(jobs.length);
@@ -67,7 +69,7 @@ describe('jobSyncerManager', () => {
       jobManagerClientMock.updateJob.mockResolvedValue(undefined);
       catalogManagerClientMock.createCatalogMetadata.mockResolvedValue(createFakeMetadata);
 
-      await jobSyncerManager.progressJobs();
+      await jobSyncerManager.execute();
 
       expect(jobManagerClientMock.getJobs).toHaveBeenCalled();
       expect(jobManagerClientMock.updateJob).toHaveBeenCalled();
@@ -85,7 +87,7 @@ describe('jobSyncerManager', () => {
         reason: 'problem',
       };
 
-      await jobSyncerManager.progressJobs();
+      await jobSyncerManager.execute();
 
       expect(jobManagerClientMock.getJobs).toHaveBeenCalled();
       expect(jobManagerClientMock.updateJob).toHaveBeenLastCalledWith(job.id, payload);
@@ -98,7 +100,7 @@ describe('jobSyncerManager', () => {
       catalogManagerClientMock.createCatalogMetadata.mockResolvedValue(createFakeMetadata);
       catalogManagerClientMock.deleteCatalogMetadata.mockResolvedValue(undefined);
 
-      await expect(jobSyncerManager.progressJobs()).rejects.toThrow('problem');
+      await expect(jobSyncerManager.execute()).rejects.toThrow('problem');
       expect(jobManagerClientMock.getJobs).toHaveBeenCalled();
       expect(catalogManagerClientMock.createCatalogMetadata).toHaveBeenCalled();
       expect(catalogManagerClientMock.deleteCatalogMetadata).toHaveBeenCalled();
