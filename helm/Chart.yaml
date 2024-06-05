@@ -2,5 +2,5 @@ apiVersion: v2
 name: job-syncer
 description: A Helm chart for job-syncer service
 type: application
-version: 1.0.0
+version: 3.0.0
 appVersion: 2.1.0
