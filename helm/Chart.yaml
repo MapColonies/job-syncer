@@ -1,6 +1,6 @@
 apiVersion: v2
-name: 3d-job-syncer
-description: A Helm chart for 3d-job-syncer cron job
+name: job-syncer
+description: A Helm chart for job-syncer service
 type: application
-version: 1.0.0
-appVersion: 1.0.0
+version: 3.0.0
+appVersion: 2.1.0

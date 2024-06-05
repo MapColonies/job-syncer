@@ -1,29 +1,54 @@
 global:
-  cloudProvider: {}
+  cloudProvider:
+    dockerRegistryUrl: 
+    flavor: openshift
+    imagePullSecretName: 
+  imagePullPolicy: IfNotPresent
   tracing: {}
   metrics: {}
-  environment: {}
-
-enabled: true
-environment: development
+  environment: development
+  
+  jobManager:
+    url: 
+    job:
+      type: 
 
 cloudProvider:
-  dockerRegistryUrl: acrarolibotnonprod.azurecr.io
-  imagePullSecretName: 'my-registry-secret'
-  flavor: openshift
+    dockerRegistryUrl:
+    flavor: 
+    imagePullSecretName: 
+imagePullPolicy: 
+environment: 
+
+ca:
+  enabled: false
+  useExternal: false
+  secretName: 
+  path: 
+  key: 
+
+jobManager:
+  url: 
+  job:
+    type: 
+
+replicaCount: 1
+revisionHistoryLimit: 5 # Amount of revisions we keep
 
 image:
-  repository: 3d-job-syncer
-  tag: 1.0.0
+  repository: job-syncer
+  tag: latest
 
-cron:
-  schedule:  '* * * * *'
-  successfulJobsHistoryLimit: 1
-  failedJobsHistoryLimit: 3
-  concurrencyPolicy: Forbid
-  restartPolicy: OnFailure
+extraVolumes: {}
+
+extraVolumeMounts: {}
+
+sidecars: {}
+
+podAnnotations: {}
 
 env:
+  targetPort: 8080
   logLevel: info
   logPrettyPrintEnabled: false
   tracing:
@@ -32,6 +57,14 @@ env:
   metrics:
     enabled: false
     url: http://localhost:55681/v1/metrics
+  intervalMS: 30000
+  catalog:
+    url:
+    link:
+      name: ''
+      description: ''
+      protocol: 3D_LAYER
+      url: 
 
 resources:
   enabled: true
@@ -43,3 +76,16 @@ resources:
       cpu: 100m
       memory: 128Mi
 
+livenessProbe:
+  enabled: true
+  initialDelaySeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 6
+  path: /liveness
+
+readinessProbe:
+  enabled: true
+  initialDelaySeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 6
+  path: /liveness
