@@ -3,7 +3,8 @@ import { Pycsw3DCatalogRecord } from '@map-colonies/mc-model-types';
 import { IFindJobsRequest, IJobResponse, IUpdateJobBody, JobManagerClient, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { IConfig } from 'config';
 import { inject, injectable } from 'tsyringe';
-import { Tracer } from '@opentelemetry/api';
+import { Tracer, trace } from '@opentelemetry/api';
+import { INFRA_CONVENTIONS, THREE_D_CONVENTIONS } from '@map-colonies/telemetry/conventions';
 import { withSpanAsyncV4 } from '@map-colonies/telemetry';
 import { CatalogManager } from '../catalogManager/catalogManager';
 import { JOB_TYPE, SERVICES } from '../common/constants';
@@ -28,6 +29,13 @@ export class JobSyncerManager {
     let catalogMetadata: Pycsw3DCatalogRecord | null = null;
 
     for (const job of jobs) {
+      const spanActive = trace.getActiveSpan();
+      spanActive?.setAttributes({
+        [INFRA_CONVENTIONS.infra.jobManagement.jobId]: job.id,
+        [INFRA_CONVENTIONS.infra.jobManagement.jobType]: JOB_TYPE,
+        [THREE_D_CONVENTIONS.three_d.catalogManager.catalogId]: job.resourceId,
+      });
+
       let reason: string | null = null;
       let isCreateCatalogSuccess = true;
       const isJobCompleted = job.completedTasks === job.taskCount;
