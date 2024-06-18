@@ -1,7 +1,7 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "3d-job-syncer.name" -}}
+{{- define "job-syncer.name" -}}
 {{- default .Chart.Name | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
@@ -10,7 +10,7 @@ Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
 */}}
-{{- define "3d-job-syncer.fullname" -}}
+{{- define "job-syncer.fullname" -}}
 {{- $name := default .Chart.Name }}
 {{- if contains $name .Release.Name }}
 {{- .Release.Name | trunc 63 | trimSuffix "-" }}
@@ -22,16 +22,16 @@ If release name contains chart name it will be used as a full name.
 {{/*
 Create chart name and version as used by the chart label.
 */}}
-{{- define "3d-job-syncer.chart" -}}
+{{- define "job-syncer.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
 Common labels
 */}}
-{{- define "3d-job-syncer.labels" -}}
-helm.sh/chart: {{ include "3d-job-syncer.chart" . }}
-{{ include "3d-job-syncer.selectorLabels" . }}
+{{- define "job-syncer.labels" -}}
+helm.sh/chart: {{ include "job-syncer.chart" . }}
+{{ include "job-syncer.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
@@ -39,85 +39,60 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 
 {{/*
-Returns the tag of the chart.
-*/}}
-{{- define "3d-job-syncer.tag" -}}
-{{- default (printf "v%s" .Chart.AppVersion) .Values.image.tag }}
-{{- end }}
-
-{{/*
 Selector labels
 */}}
-{{- define "3d-job-syncer.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "3d-job-syncer.name" . }}
+{{- define "job-syncer.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "job-syncer.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
-Returns the environment from global if exists or from the chart's values, defaults to development
+Returns the environment from the chart's values if exists or from global, defaults to development
 */}}
-{{- define "3d-job-syncer.environment" -}}
-{{- if .Values.global.environment }}
-    {{- .Values.global.environment -}}
+{{- define "job-syncer.environment" -}}
+{{- if .Values.environment }}
+    {{- .Values.environment -}}
 {{- else -}}
-    {{- .Values.environment | default "development" -}}
+    {{- .Values.global.environment | default "development" -}}
 {{- end -}}
 {{- end -}}
 
 {{/*
-Returns the cloud provider name from global if exists or from the chart's values, defaults to minikube
+Returns the cloud provider name from the chart's values if exists or from global, defaults to minikube
 */}}
-{{- define "3d-job-syncer.cloudProviderFlavor" -}}
-{{- if .Values.global.cloudProvider.flavor }}
-    {{- .Values.global.cloudProvider.flavor -}}
-{{- else if .Values.cloudProvider -}}
-    {{- .Values.cloudProvider.flavor | default "minikube" -}}
+{{- define "job-syncer.cloudProviderFlavor" -}}
+{{- if .Values.cloudProvider.flavor }}
+    {{- .Values.cloudProvider.flavor -}}
 {{- else -}}
-    {{ "minikube" }}
+    {{- .Values.global.cloudProvider.flavor | default "minikube" -}}
 {{- end -}}
 {{- end -}}
 
 {{/*
-Returns the cloud provider docker registry url from global if exists or from the chart's values
+Returns the tag of the chart.
 */}}
-{{- define "3d-job-syncer.cloudProviderDockerRegistryUrl" -}}
-{{- if .Values.global.cloudProvider.dockerRegistryUrl }}
-    {{- printf "%s/" .Values.global.cloudProvider.dockerRegistryUrl -}}
-{{- else if .Values.cloudProvider.dockerRegistryUrl -}}
+{{- define "job-syncer.tag" -}}
+{{- default (printf "v%s" .Chart.AppVersion) .Values.image.tag }}
+{{- end }}
+
+{{/*
+Returns the cloud provider docker registry url from the chart's values if exists or from global
+*/}}
+{{- define "job-syncer.cloudProviderDockerRegistryUrl" -}}
+{{- if .Values.cloudProvider.dockerRegistryUrl }}
     {{- printf "%s/" .Values.cloudProvider.dockerRegistryUrl -}}
 {{- else -}}
+    {{- printf "%s/" .Values.global.cloudProvider.dockerRegistryUrl -}}
 {{- end -}}
 {{- end -}}
 
 {{/*
-Returns the cloud provider image pull secret name from global if exists or from the chart's values
+Returns the cloud provider image pull secret name from the chart's values if exists or from global
 */}}
-{{- define "3d-job-syncer.cloudProviderImagePullSecretName" -}}
-{{- if .Values.global.cloudProvider.imagePullSecretName }}
-    {{- .Values.global.cloudProvider.imagePullSecretName -}}
-{{- else if .Values.cloudProvider -}}
+{{- define "job-syncer.cloudProviderImagePullSecretName" -}}
+{{- if .Values.cloudProvider.imagePullSecretName }}
     {{- .Values.cloudProvider.imagePullSecretName -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
-Returns the tracing url from global if exists or from the chart's values
-*/}}
-{{- define "3d-job-syncer.tracingUrl" -}}
-{{- if .Values.global.tracing.url }}
-    {{- .Values.global.tracing.url -}}
-{{- else if .Values.cloudProvider -}}
-    {{- .Values.env.tracing.url -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
-Returns the tracing url from global if exists or from the chart's values
-*/}}
-{{- define "3d-job-syncer.metricsUrl" -}}
-{{- if .Values.global.metrics.url }}
-    {{- .Values.global.metrics.url -}}
-{{- else -}}
-    {{- .Values.env.metrics.url -}}
+{{- else if .Values.global.cloudProvider.imagePullSecretName -}}
+    {{- .Values.global.cloudProvider.imagePullSecretName -}}
 {{- end -}}
 {{- end -}}

@@ -1,6 +1,6 @@
 import { Layer3DMetadata } from '@map-colonies/mc-model-types';
 import { IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
-import { randBoolean, randNumber, randSentence, randUuid, randWord } from '@ngneat/falso';
+import { faker } from '@faker-js/faker';
 import { IJobParameters, ITaskParameters } from '../../src/jobSyncerManager/interfaces';
 
 const maxTaskCount = 10;
@@ -14,48 +14,48 @@ export const jobManagerClientMock = {
 export const createJobParameters = (): IJobParameters => {
   return {
     metadata: {} as Layer3DMetadata,
-    modelId: randUuid(),
-    tilesetFilename: randUuid(),
-    filesCount: randNumber(),
-    pathToTileset: `${randWord()}/${randWord()}`,
+    modelId: faker.string.uuid(),
+    tilesetFilename: faker.string.uuid(),
+    filesCount: faker.number.int(),
+    pathToTileset: `${faker.word.sample()}/${faker.word.sample()}`,
   };
 };
 
 export const createJob = (allTasksCompleted = false, hasFailedTasks = false): IJobResponse<IJobParameters, ITaskParameters> => {
-  const completedTasks = randNumber({ min: 1, max: maxTaskCount - 1 });
-  const taskCount = allTasksCompleted ? completedTasks : randNumber({ min: completedTasks + 1, max: maxTaskCount });
+  const completedTasks = faker.number.int({ min: 1, max: maxTaskCount - 1 });
+  const taskCount = allTasksCompleted ? completedTasks : faker.number.int({ min: completedTasks + 1, max: maxTaskCount });
   const failedTasks = hasFailedTasks ? taskCount - completedTasks : 0;
   const inProgressTasks = taskCount - completedTasks - failedTasks;
   const pendingTasks = taskCount - completedTasks - failedTasks - inProgressTasks;
   return {
-    id: randUuid(),
+    id: faker.string.uuid(),
     completedTasks,
     taskCount,
     failedTasks,
     inProgressTasks,
     pendingTasks,
     status: OperationStatus.IN_PROGRESS,
-    resourceId: randUuid(),
-    version: randWord(),
-    type: randWord(),
-    description: randSentence(),
+    resourceId: faker.string.uuid(),
+    version: faker.word.sample(),
+    type: faker.word.sample(),
+    description: faker.word.words(),
     parameters: createJobParameters(),
-    reason: randSentence(),
-    created: randWord(),
-    updated: randWord(),
-    percentage: randNumber(),
+    reason: faker.word.words(),
+    created: faker.word.sample(),
+    updated: faker.word.sample(),
+    percentage: faker.number.int(),
     isCleaned: false,
-    priority: randNumber(),
+    priority: faker.number.int(),
     expiredTasks: 0,
     abortedTasks: 0,
-    domain: randWord(),
+    domain: faker.word.sample(),
   };
 };
 
-export const createJobs = (jobsAmount = randNumber({ min: 1, max: maxJobsNumber })): IJobResponse<IJobParameters, ITaskParameters>[] => {
+export const createJobs = (jobsAmount = faker.number.int({ min: 1, max: maxJobsNumber })): IJobResponse<IJobParameters, ITaskParameters>[] => {
   const jobs: IJobResponse<IJobParameters, ITaskParameters>[] = [];
   for (let index = 1; index < jobsAmount; index++) {
-    jobs.push(createJob(randBoolean()));
+    jobs.push(createJob(faker.datatype.boolean()));
   }
   return jobs;
 };
