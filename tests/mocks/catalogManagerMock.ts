@@ -1,5 +1,5 @@
 import { Pycsw3DCatalogRecord } from '@map-colonies/mc-model-types';
-import { randUuid } from '@ngneat/falso';
+import { faker } from '@faker-js/faker';
 
 export const catalogManagerClientMock = {
   createCatalogMetadata: jest.fn(),
@@ -7,5 +7,5 @@ export const catalogManagerClientMock = {
 };
 
 export const createFakeMetadata: Pycsw3DCatalogRecord = {
-  id: randUuid(),
+  id: faker.string.uuid(),
 } as Pycsw3DCatalogRecord;
