@@ -2,6 +2,7 @@ import { container } from 'tsyringe';
 import jsLogger from '@map-colonies/js-logger';
 import mockAxios from 'jest-mock-axios';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
+import { trace } from '@opentelemetry/api';
 import { getApp } from '../../../src/app';
 import { SERVICES } from '../../../src/common/constants';
 import { JobSyncerManager } from '../../../src/jobSyncerManager/jobSyncer';
@@ -15,6 +16,7 @@ describe('jobSyncerManager', () => {
     getApp({
       override: [
         { token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false }) } },
+        { token: SERVICES.TRACER, provider: { useValue: trace.getTracer('testTracer') } },
         { token: SERVICES.JOB_MANAGER_CLIENT, provider: { useValue: jobManagerClientMock } },
       ],
     });
@@ -27,11 +29,11 @@ describe('jobSyncerManager', () => {
     mockAxios.reset();
   });
 
-  describe('progressJobs', () => {
+  describe('execute', () => {
     it('When has an active job, it should not start another job', async () => {
       jobSyncerManager['isActive'] = true;
 
-      await jobSyncerManager.progressJobs();
+      await jobSyncerManager.execute();
 
       expect(jobManagerClientMock.getJobs).not.toHaveBeenCalled();
       expect(jobManagerClientMock.updateJob).not.toHaveBeenCalled();
@@ -47,7 +49,7 @@ describe('jobSyncerManager', () => {
       mockAxios.post.mockResolvedValue({ data: metadata });
       const completedJobsCount = jobs.filter((job) => job.completedTasks === job.taskCount).length;
 
-      await jobSyncerManager.progressJobs();
+      await jobSyncerManager.execute();
 
       expect(jobManagerClientMock.getJobs).toHaveBeenCalled();
       expect(jobManagerClientMock.updateJob).toHaveBeenCalledTimes(jobs.length);
@@ -72,7 +74,7 @@ describe('jobSyncerManager', () => {
         status: OperationStatus.FAILED,
       };
 
-      await jobSyncerManager.progressJobs();
+      await jobSyncerManager.execute();
 
       expect(jobManagerClientMock.getJobs).toHaveBeenCalled();
       expect(jobManagerClientMock.updateJob).toHaveBeenCalledTimes(jobs.length);
@@ -90,7 +92,7 @@ describe('jobSyncerManager', () => {
       jobManagerClientMock.getJobs.mockResolvedValue(job);
       jobManagerClientMock.updateJob.mockRejectedValue(new Error('problem'));
 
-      const response = jobSyncerManager.progressJobs();
+      const response = jobSyncerManager.execute();
 
       await expect(response).rejects.toThrow(Error);
       expect(mockAxios.post).not.toHaveBeenCalled();
@@ -106,7 +108,7 @@ describe('jobSyncerManager', () => {
       mockAxios.post.mockResolvedValue({ data: createFakeMetadata });
       mockAxios.delete.mockResolvedValue({ data: createFakeMetadata });
 
-      const response = jobSyncerManager.progressJobs();
+      const response = jobSyncerManager.execute();
 
       await expect(response).rejects.toThrow(Error);
       expect(mockAxios.delete).toHaveBeenCalled();

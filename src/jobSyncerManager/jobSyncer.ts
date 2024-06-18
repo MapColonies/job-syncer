@@ -3,6 +3,9 @@ import { Pycsw3DCatalogRecord } from '@map-colonies/mc-model-types';
 import { IFindJobsRequest, IJobResponse, IUpdateJobBody, JobManagerClient, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { IConfig } from 'config';
 import { inject, injectable } from 'tsyringe';
+import { Tracer, trace } from '@opentelemetry/api';
+import { INFRA_CONVENTIONS, THREE_D_CONVENTIONS } from '@map-colonies/telemetry/conventions';
+import { withSpanAsyncV4 } from '@map-colonies/telemetry';
 import { CatalogManager } from '../catalogManager/catalogManager';
 import { JOB_TYPE, SERVICES } from '../common/constants';
 import { IJobParameters, ITaskParameters } from '../jobSyncerManager/interfaces';
@@ -13,6 +16,7 @@ export class JobSyncerManager {
 
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
+    @inject(SERVICES.TRACER) public readonly tracer: Tracer,
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
     @inject(SERVICES.JOB_MANAGER_CLIENT) private readonly jobManagerClient: JobManagerClient,
     @inject(SERVICES.CATALOG_MANAGER) private readonly catalogManagerClient: CatalogManager
@@ -20,18 +24,18 @@ export class JobSyncerManager {
     this.isActive = false;
   }
 
-  public async progressJobs(): Promise<void> {
-    if (this.isActive) {
-      return;
-    }
-    this.isActive = true;
-
-    this.logger.debug({ msg: `Getting In-Progress jobs` });
-    const jobs = await this.getInProgressJobs();
-
+  @withSpanAsyncV4
+  private async progressJobs(jobs: IJobResponse<IJobParameters, ITaskParameters>[]): Promise<void> {
     let catalogMetadata: Pycsw3DCatalogRecord | null = null;
 
     for (const job of jobs) {
+      const spanActive = trace.getActiveSpan();
+      spanActive?.setAttributes({
+        [INFRA_CONVENTIONS.infra.jobManagement.jobId]: job.id,
+        [INFRA_CONVENTIONS.infra.jobManagement.jobType]: JOB_TYPE,
+        [THREE_D_CONVENTIONS.three_d.catalogManager.catalogId]: job.resourceId,
+      });
+
       let reason: string | null = null;
       let isCreateCatalogSuccess = true;
       const isJobCompleted = job.completedTasks === job.taskCount;
@@ -64,10 +68,9 @@ export class JobSyncerManager {
         payload,
       });
     }
-
-    this.isActive = false;
   }
 
+  @withSpanAsyncV4
   private async getInProgressJobs(): Promise<IJobResponse<IJobParameters, ITaskParameters>[]> {
     const queryParams: IFindJobsRequest = {
       status: OperationStatus.IN_PROGRESS,
@@ -82,12 +85,14 @@ export class JobSyncerManager {
     return jobs;
   }
 
+  @withSpanAsyncV4
   private async handleUpdateJob(jobId: string, payload: IUpdateJobBody<IJobParameters>): Promise<void> {
     this.logger.debug({ msg: 'Starting updateJob', jobId });
     await this.jobManagerClient.updateJob<IJobParameters>(jobId, payload);
     this.logger.debug({ msg: 'Done updateJob', jobId });
   }
 
+  @withSpanAsyncV4
   private async handleUpdateJobRejection(error: unknown, catalogMetadata: Pycsw3DCatalogRecord | null): Promise<void> {
     if (catalogMetadata?.id !== undefined) {
       await this.catalogManagerClient.deleteCatalogMetadata(catalogMetadata.id);
@@ -97,6 +102,21 @@ export class JobSyncerManager {
       this.logger.error({ error, msg: 'Failed to updateJob', stack: error.stack });
       throw error;
     }
+  }
+
+  public async execute(): Promise<void> {
+    if (this.isActive) {
+      return;
+    }
+    this.isActive = true;
+
+    this.logger.debug({ msg: `Getting In-Progress jobs` });
+    const jobs = await this.getInProgressJobs();
+    if (jobs.length > 0) {
+      await this.progressJobs(jobs);
+    }
+
+    this.isActive = false;
   }
 
   private buildPayload(
