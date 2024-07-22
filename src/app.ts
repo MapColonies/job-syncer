@@ -12,7 +12,6 @@ import { LogContext } from './common/interfaces';
 
 @singleton()
 export class App {
-  
   private readonly intervalMs: number;
   private readonly port: number;
   private readonly serverInstance: express.Application;

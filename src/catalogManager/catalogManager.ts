@@ -10,7 +10,6 @@ import { SERVICES } from '../common/constants';
 
 @injectable()
 export class CatalogManager {
-  
   private readonly catalogUrl: string;
   private readonly link: Link;
   private readonly logContext: LogContext;

@@ -13,7 +13,6 @@ import { LogContext } from '../common/interfaces';
 
 @injectable()
 export class JobSyncerManager {
-
   private isActive: boolean;
   private readonly logContext: LogContext;
 
@@ -51,19 +50,19 @@ export class JobSyncerManager {
       try {
         if (isJobCompleted) {
           catalogMetadata = await this.catalogManagerClient.createCatalogMetadata(job.parameters);
-          this.logger.info({ 
-            msg: `Job: ${job.id} is completed`, 
+          this.logger.info({
+            msg: `Job: ${job.id} is completed`,
             logContext,
-            modelId: job.parameters.modelId, 
-            modelName: job.parameters.metadata.productName 
+            modelId: job.parameters.modelId,
+            modelName: job.parameters.metadata.productName,
           });
         }
       } catch (error) {
-        this.logger.error({ 
-          msg: error, 
+        this.logger.error({
+          msg: error,
           logContext,
-          modelId: job.parameters.modelId, 
-          modelName: job.parameters.metadata.productName 
+          modelId: job.parameters.modelId,
+          modelName: job.parameters.metadata.productName,
         });
         isCreateCatalogSuccess = false;
         reason = (error as Error).message;
@@ -99,16 +98,16 @@ export class JobSyncerManager {
       shouldReturnTasks: false,
     };
 
-    this.logger.debug({ 
-      msg: 'Starting getInProgressJobs', 
+    this.logger.debug({
+      msg: 'Starting getInProgressJobs',
       logContext,
-      queryParams 
+      queryParams,
     });
     const jobs = await this.jobManagerClient.getJobs<IJobParameters, ITaskParameters>(queryParams);
-    this.logger.debug({ 
+    this.logger.debug({
       msg: 'Finishing getInProgressJobs',
-      logContext, 
-      count: jobs.length 
+      logContext,
+      count: jobs.length,
     });
     return jobs;
   }
@@ -116,16 +115,16 @@ export class JobSyncerManager {
   @withSpanAsyncV4
   private async handleUpdateJob(jobId: string, payload: IUpdateJobBody<IJobParameters>): Promise<void> {
     const logContext = { ...this.logContext, function: this.handleUpdateJob.name };
-    this.logger.debug({ 
-      msg: 'Starting updateJob', 
+    this.logger.debug({
+      msg: 'Starting updateJob',
       logContext,
-      jobId 
+      jobId,
     });
     await this.jobManagerClient.updateJob<IJobParameters>(jobId, payload);
-    this.logger.debug({ 
-      msg: 'Done updateJob', 
+    this.logger.debug({
+      msg: 'Done updateJob',
       logContext,
-      jobId 
+      jobId,
     });
   }
 
@@ -137,11 +136,11 @@ export class JobSyncerManager {
     }
 
     if (error instanceof Error) {
-      this.logger.error({ 
-        error, 
+      this.logger.error({
+        error,
         logContext,
-        msg: 'Failed to updateJob', 
-        stack: error.stack 
+        msg: 'Failed to updateJob',
+        stack: error.stack,
       });
       throw error;
     }
@@ -154,9 +153,9 @@ export class JobSyncerManager {
     const logContext = { ...this.logContext, function: this.execute.name };
     this.isActive = true;
 
-    this.logger.debug({ 
+    this.logger.debug({
       msg: `Getting In-Progress jobs`,
-      logContext
+      logContext,
     });
     const jobs = await this.getInProgressJobs();
     if (jobs.length > 0) {
