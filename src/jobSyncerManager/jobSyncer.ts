@@ -9,10 +9,13 @@ import { withSpanAsyncV4 } from '@map-colonies/telemetry';
 import { CatalogManager } from '../catalogManager/catalogManager';
 import { JOB_TYPE, SERVICES } from '../common/constants';
 import { IJobParameters, ITaskParameters } from '../jobSyncerManager/interfaces';
+import { LogContext } from '../common/interfaces';
 
 @injectable()
 export class JobSyncerManager {
+
   private isActive: boolean;
+  private readonly logContext: LogContext;
 
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
@@ -22,10 +25,15 @@ export class JobSyncerManager {
     @inject(SERVICES.CATALOG_MANAGER) private readonly catalogManagerClient: CatalogManager
   ) {
     this.isActive = false;
+    this.logContext = {
+      fileName: __filename,
+      class: JobSyncerManager.name,
+    };
   }
 
   @withSpanAsyncV4
   private async progressJobs(jobs: IJobResponse<IJobParameters, ITaskParameters>[]): Promise<void> {
+    const logContext = { ...this.logContext, function: this.progressJobs.name };
     let catalogMetadata: Pycsw3DCatalogRecord | null = null;
 
     for (const job of jobs) {
@@ -43,35 +51,47 @@ export class JobSyncerManager {
       try {
         if (isJobCompleted) {
           catalogMetadata = await this.catalogManagerClient.createCatalogMetadata(job.parameters);
-          this.logger.info({ msg: `Job: ${job.id} is completed`, modelId: job.parameters.modelId, modelName: job.parameters.metadata.productName });
+          this.logger.info({ 
+            msg: `Job: ${job.id} is completed`, 
+            logContext,
+            modelId: job.parameters.modelId, 
+            modelName: job.parameters.metadata.productName 
+          });
         }
       } catch (error) {
-        this.logger.error({ msg: error, modelId: job.parameters.modelId, modelName: job.parameters.metadata.productName });
+        this.logger.error({ 
+          msg: error, 
+          logContext,
+          modelId: job.parameters.modelId, 
+          modelName: job.parameters.metadata.productName 
+        });
         isCreateCatalogSuccess = false;
         reason = (error as Error).message;
       }
 
       const status = this.getStatus(job, isJobCompleted, isCreateCatalogSuccess);
-      const payload = this.buildPayload(job, status, reason);
+      const jobPayload = this.buildJobPayload(job, status, reason);
 
       try {
-        await this.handleUpdateJob(job.id, payload);
+        await this.handleUpdateJob(job.id, jobPayload);
       } catch (error) {
         await this.handleUpdateJobRejection(error, catalogMetadata);
       }
 
       this.logger.debug({
         msg: 'Finished job syncer',
+        logContext,
         jobId: job.id,
         modelId: job.parameters.modelId,
         modelName: job.parameters.metadata.productName,
-        payload,
+        payload: jobPayload,
       });
     }
   }
 
   @withSpanAsyncV4
   private async getInProgressJobs(): Promise<IJobResponse<IJobParameters, ITaskParameters>[]> {
+    const logContext = { ...this.logContext, function: this.getInProgressJobs.name };
     const queryParams: IFindJobsRequest = {
       status: OperationStatus.IN_PROGRESS,
       type: JOB_TYPE,
@@ -79,27 +99,50 @@ export class JobSyncerManager {
       shouldReturnTasks: false,
     };
 
-    this.logger.debug({ msg: 'Starting getInProgressJobs', queryParams });
+    this.logger.debug({ 
+      msg: 'Starting getInProgressJobs', 
+      logContext,
+      queryParams 
+    });
     const jobs = await this.jobManagerClient.getJobs<IJobParameters, ITaskParameters>(queryParams);
-    this.logger.debug({ msg: 'Finishing getInProgressJobs', count: jobs.length });
+    this.logger.debug({ 
+      msg: 'Finishing getInProgressJobs',
+      logContext, 
+      count: jobs.length 
+    });
     return jobs;
   }
 
   @withSpanAsyncV4
   private async handleUpdateJob(jobId: string, payload: IUpdateJobBody<IJobParameters>): Promise<void> {
-    this.logger.debug({ msg: 'Starting updateJob', jobId });
+    const logContext = { ...this.logContext, function: this.handleUpdateJob.name };
+    this.logger.debug({ 
+      msg: 'Starting updateJob', 
+      logContext,
+      jobId 
+    });
     await this.jobManagerClient.updateJob<IJobParameters>(jobId, payload);
-    this.logger.debug({ msg: 'Done updateJob', jobId });
+    this.logger.debug({ 
+      msg: 'Done updateJob', 
+      logContext,
+      jobId 
+    });
   }
 
   @withSpanAsyncV4
   private async handleUpdateJobRejection(error: unknown, catalogMetadata: Pycsw3DCatalogRecord | null): Promise<void> {
+    const logContext = { ...this.logContext, function: this.handleUpdateJobRejection.name };
     if (catalogMetadata?.id !== undefined) {
       await this.catalogManagerClient.deleteCatalogMetadata(catalogMetadata.id);
     }
 
     if (error instanceof Error) {
-      this.logger.error({ error, msg: 'Failed to updateJob', stack: error.stack });
+      this.logger.error({ 
+        error, 
+        logContext,
+        msg: 'Failed to updateJob', 
+        stack: error.stack 
+      });
       throw error;
     }
   }
@@ -108,9 +151,13 @@ export class JobSyncerManager {
     if (this.isActive) {
       return;
     }
+    const logContext = { ...this.logContext, function: this.execute.name };
     this.isActive = true;
 
-    this.logger.debug({ msg: `Getting In-Progress jobs` });
+    this.logger.debug({ 
+      msg: `Getting In-Progress jobs`,
+      logContext
+    });
     const jobs = await this.getInProgressJobs();
     if (jobs.length > 0) {
       await this.progressJobs(jobs);
@@ -119,7 +166,7 @@ export class JobSyncerManager {
     this.isActive = false;
   }
 
-  private buildPayload(
+  private buildJobPayload(
     job: IJobResponse<IJobParameters, ITaskParameters>,
     status: OperationStatus,
     reason: string | null
