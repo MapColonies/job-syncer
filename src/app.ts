@@ -53,8 +53,11 @@ export class App {
       });
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-misused-promises
-    setInterval(async () => this.jobSyncerManager.execute(), this.intervalMs);
+    setInterval(() => {
+      void (async (): Promise<void> => {
+        await this.jobSyncerManager.execute();
+      })();
+    }, this.intervalMs);
   }
 }
 
