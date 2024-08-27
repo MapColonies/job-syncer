@@ -26,9 +26,7 @@
   "server": {
     "port": "SERVER_PORT"
   },
-  "jobSyncer": {
-    "intervalMs": "JOB_SYNCER_INTERVAL_MS"
-  },
+  "intervalMs": "JOB_SYNCER_INTERVAL_MS",
   "jobManager": {
     "url": "JOB_MANAGER_URL",
     "jobType": "JOB_TYPE"

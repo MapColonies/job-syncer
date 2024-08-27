@@ -4,9 +4,10 @@ import { I3DCatalogUpsertRequestBody, Link, Pycsw3DCatalogRecord } from '@map-co
 import axios from 'axios';
 import { Tracer } from '@opentelemetry/api';
 import { withSpanAsyncV4 } from '@map-colonies/telemetry';
-import { IConfig, LogContext } from '../common/interfaces';
+import { LogContext } from '../common/interfaces';
 import { IJobParameters } from '../jobSyncerManager/interfaces';
 import { SERVICES } from '../common/constants';
+import { ConfigType } from '../common/config';
 
 @injectable()
 export class CatalogManager {
@@ -17,10 +18,10 @@ export class CatalogManager {
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(SERVICES.TRACER) public readonly tracer: Tracer,
-    @inject(SERVICES.CONFIG) private readonly config: IConfig
+    @inject(SERVICES.CONFIG) private readonly config: ConfigType
   ) {
-    this.catalogUrl = this.config.get<string>('catalog.url');
-    this.link = this.config.get<Link>('catalog.link');
+    this.catalogUrl = this.config.get('catalog.url');
+    this.link = this.config.get('catalog.link');
     this.logContext = {
       fileName: __filename,
       class: CatalogManager.name,

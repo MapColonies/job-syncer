@@ -12,8 +12,8 @@ import { IJobParameters } from '../../../src/jobSyncerManager/interfaces';
 describe('jobSyncerManager', () => {
   let jobSyncerManager: JobSyncerManager;
 
-  beforeEach(() => {
-    getApp({
+  beforeEach(async () => {
+    await getApp({
       override: [
         { token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false }) } },
         { token: SERVICES.TRACER, provider: { useValue: trace.getTracer('testTracer') } },

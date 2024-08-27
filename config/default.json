@@ -11,14 +11,15 @@
     "metrics": {
       "enabled": true,
       "url": "http://localhost:4318/v1/metrics"
+    },
+    "shared": {
+      
     }
   },
   "server": {
-    "port": "8080"
+    "port": 8080
   },
-  "jobSyncer": {
-    "intervalMs": 3000
-  },
+  "intervalMs": 3000,
   "jobManager": {
     "url": "http://127.0.0.1:8080",
     "jobType": "Ingestion_New_3D"

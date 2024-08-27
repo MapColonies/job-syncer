@@ -1,6 +1,5 @@
 import { inject, singleton } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
-import { IConfig } from 'config';
 import express, { Request, Response } from 'express';
 import { collectMetricsExpressMiddleware } from '@map-colonies/telemetry';
 import { Registry } from 'prom-client';
@@ -9,6 +8,7 @@ import { SERVICES } from './common/constants';
 import { RegisterOptions, registerExternalValues } from './containerConfig';
 import { JobSyncerManager } from './jobSyncerManager/jobSyncer';
 import { LogContext } from './common/interfaces';
+import { ConfigType, initConfig } from './common/config';
 
 @singleton()
 export class App {
@@ -19,12 +19,12 @@ export class App {
 
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
-    @inject(SERVICES.CONFIG) private readonly config: IConfig,
+    @inject(SERVICES.CONFIG) private readonly config: ConfigType,
     @inject(SERVICES.JOB_SYNCER_MANAGER) private readonly jobSyncerManager: JobSyncerManager,
     @inject(SERVICES.METRICS_REGISTRY) private readonly metricsRegistry?: Registry
   ) {
-    this.intervalMs = this.config.get<number>('jobSyncer.intervalMs');
-    this.port = this.config.get<number>('server.port');
+    this.intervalMs = this.config.get('intervalMs');
+    this.port = this.config.get('server.port');
     this.serverInstance = express();
 
     if (this.metricsRegistry) {
@@ -61,7 +61,8 @@ export class App {
   }
 }
 
-export function getApp(registerOptions?: RegisterOptions): App {
+export async function getApp(registerOptions?: RegisterOptions): Promise<App> {
+  await initConfig(false);
   const container = registerExternalValues(registerOptions);
   const app = container.resolve(App);
   return app;
