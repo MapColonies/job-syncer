@@ -22,7 +22,9 @@
   "intervalMs": 3000,
   "jobManager": {
     "url": "http://127.0.0.1:8080",
-    "jobType": "Ingestion_New_3D"
+    "job": {
+      "type": "Ingestion_New_3D"
+    }
   },
   "catalog": {
     "url": "http://127.0.0.1:8083",

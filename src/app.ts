@@ -62,7 +62,7 @@ export class App {
 }
 
 export async function getApp(registerOptions?: RegisterOptions): Promise<App> {
-  await initConfig(false);
+  await initConfig(true);
   const container = registerExternalValues(registerOptions);
   const app = container.resolve(App);
   return app;
