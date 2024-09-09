@@ -1,10 +1,10 @@
 import 'reflect-metadata';
 import { getApp } from './app';
 
-function main(): void {
-  const app = getApp();
-
+void getApp()
+.then((app) => {
   app.run();
-}
-
-void main();
+})
+.catch((error: Error) => {
+  console.error(error);
+});
