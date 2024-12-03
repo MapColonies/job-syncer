@@ -57,15 +57,15 @@ export class JobSyncerManager {
             modelName: job.parameters.metadata.productName,
           });
         }
-      } catch (error) {
+      } catch (err) {
         this.logger.error({
-          msg: error,
+          err,
           logContext,
           modelId: job.parameters.modelId,
           modelName: job.parameters.metadata.productName,
         });
         isCreateCatalogSuccess = false;
-        reason = (error as Error).message;
+        reason = (err as Error).message;
       }
 
       const status = this.getStatus(job, isJobCompleted, isCreateCatalogSuccess);
@@ -129,20 +129,20 @@ export class JobSyncerManager {
   }
 
   @withSpanAsyncV4
-  private async handleUpdateJobRejection(error: unknown, catalogMetadata: Pycsw3DCatalogRecord | null): Promise<void> {
+  private async handleUpdateJobRejection(err: unknown, catalogMetadata: Pycsw3DCatalogRecord | null): Promise<void> {
     const logContext = { ...this.logContext, function: this.handleUpdateJobRejection.name };
     if (catalogMetadata?.id !== undefined) {
       await this.catalogManagerClient.deleteCatalogMetadata(catalogMetadata.id);
     }
 
-    if (error instanceof Error) {
+    if (err instanceof Error) {
       this.logger.error({
-        error,
+        err,
         logContext,
         msg: 'Failed to updateJob',
-        stack: error.stack,
+        stack: err.stack,
       });
-      throw error;
+      throw err;
     }
   }
 
