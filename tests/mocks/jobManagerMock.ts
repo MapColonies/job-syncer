@@ -9,6 +9,7 @@ const maxJobsNumber = 5;
 export const jobManagerClientMock = {
   updateJob: jest.fn(),
   getJobs: jest.fn(),
+  getJob: jest.fn(),
 };
 
 export const createJobParameters = (): IJobParameters => {
@@ -39,7 +40,6 @@ export const createJob = (allTasksCompleted = false, hasFailedTasks = false): IJ
     version: faker.word.sample(),
     type: faker.word.sample(),
     description: faker.word.words(),
-    parameters: createJobParameters(),
     reason: faker.word.words(),
     created: faker.word.sample(),
     updated: faker.word.sample(),
@@ -49,7 +49,7 @@ export const createJob = (allTasksCompleted = false, hasFailedTasks = false): IJ
     expiredTasks: 0,
     abortedTasks: 0,
     domain: faker.word.sample(),
-  };
+  } as unknown as IJobResponse<IJobParameters, ITaskParameters>;
 };
 
 export const createJobs = (jobsAmount = faker.number.int({ min: 1, max: maxJobsNumber })): IJobResponse<IJobParameters, ITaskParameters>[] => {

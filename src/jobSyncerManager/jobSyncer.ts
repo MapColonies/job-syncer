@@ -49,20 +49,26 @@ export class JobSyncerManager {
 
       try {
         if (isJobCompleted) {
-          catalogMetadata = await this.catalogManagerClient.createCatalogMetadata(job.parameters);
+          const jobDataWithParameters = await this.jobManagerClient.getJob<IJobParameters, ITaskParameters>(job.id, false);
+          const jobParameters = jobDataWithParameters.parameters;
+          catalogMetadata = await this.catalogManagerClient.createCatalogMetadata(jobParameters);
           this.logger.info({
             msg: `Job: ${job.id} is completed`,
             logContext,
-            modelId: job.parameters.modelId,
-            modelName: job.parameters.metadata.productName,
+            modelId: jobParameters.modelId,
+            modelName: jobParameters.metadata.productName,
+            [INFRA_CONVENTIONS.infra.jobManagement.jobId]: job.id,
+            [INFRA_CONVENTIONS.infra.jobManagement.jobType]: JOB_TYPE,
+            [THREE_D_CONVENTIONS.three_d.catalogManager.catalogId]: job.resourceId,
           });
         }
       } catch (err) {
         this.logger.error({
           err,
           logContext,
-          modelId: job.parameters.modelId,
-          modelName: job.parameters.metadata.productName,
+          [INFRA_CONVENTIONS.infra.jobManagement.jobId]: job.id,
+          [INFRA_CONVENTIONS.infra.jobManagement.jobType]: JOB_TYPE,
+          [THREE_D_CONVENTIONS.three_d.catalogManager.catalogId]: job.resourceId,
         });
         isCreateCatalogSuccess = false;
         reason = (err as Error).message;
@@ -80,9 +86,9 @@ export class JobSyncerManager {
       this.logger.debug({
         msg: 'Finished job syncer',
         logContext,
-        jobId: job.id,
-        modelId: job.parameters.modelId,
-        modelName: job.parameters.metadata.productName,
+        [INFRA_CONVENTIONS.infra.jobManagement.jobId]: job.id,
+        [INFRA_CONVENTIONS.infra.jobManagement.jobType]: JOB_TYPE,
+        [THREE_D_CONVENTIONS.three_d.catalogManager.catalogId]: job.resourceId,
         payload: jobPayload,
       });
     }
