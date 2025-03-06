@@ -6,7 +6,7 @@ import { trace } from '@opentelemetry/api';
 import { getApp } from '../../../src/app';
 import { SERVICES } from '../../../src/common/constants';
 import { JobSyncerManager } from '../../../src/jobSyncerManager/jobSyncer';
-import { createJob, createJobs, jobManagerClientMock } from '../../mocks/jobManagerMock';
+import { createJob, createJobParameters, createJobs, jobManagerClientMock } from '../../mocks/jobManagerMock';
 import { createFakeMetadata } from '../../mocks/catalogManagerMock';
 
 describe('jobSyncerManager', () => {
@@ -42,8 +42,12 @@ describe('jobSyncerManager', () => {
 
     it('When has completed job, it should insert the metadata to the catalog service', async () => {
       const jobs = createJobs();
-      jobs.push(createJob(true));
+      const finishedJob = createJob(true);
+      jobs.push(finishedJob);
+      const finishedJobWithParameters = createJob(true);
+      finishedJobWithParameters.parameters = createJobParameters();
       jobManagerClientMock.getJobs.mockResolvedValue(jobs);
+      jobManagerClientMock.getJob.mockResolvedValue(finishedJobWithParameters);
       jobManagerClientMock.updateJob.mockResolvedValue(undefined);
       const metadata = createFakeMetadata;
       mockAxios.post.mockResolvedValue({ data: metadata });
@@ -66,6 +70,9 @@ describe('jobSyncerManager', () => {
         }
       }
       jobManagerClientMock.getJobs.mockResolvedValue(jobs);
+      const jobWithParameters = jobs[0];
+      jobWithParameters.parameters = createJobParameters();
+      jobManagerClientMock.getJob.mockResolvedValue(jobWithParameters);
       jobManagerClientMock.updateJob.mockResolvedValue(undefined);
       mockAxios.post.mockRejectedValue(new Error('problem'));
       const payload = {

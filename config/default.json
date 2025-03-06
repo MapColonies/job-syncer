@@ -28,7 +28,7 @@
     "link": {
       "name": "",
       "description": "",
-      "protocol": "3D_TILES",
+      "protocol": "3DTiles",
       "url": "http://127.0.0.1:8084"
     }
   }

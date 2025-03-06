@@ -5,7 +5,7 @@ import { trace } from '@opentelemetry/api';
 import { getApp } from '../../../src/app';
 import { SERVICES } from '../../../src/common/constants';
 import { JobSyncerManager } from '../../../src/jobSyncerManager/jobSyncer';
-import { createJob, createJobs, jobManagerClientMock } from '../../mocks/jobManagerMock';
+import { createJob, createJobParameters, createJobs, jobManagerClientMock } from '../../mocks/jobManagerMock';
 import { catalogManagerClientMock, createFakeMetadata } from '../../mocks/catalogManagerMock';
 import { IJobParameters } from '../../../src/jobSyncerManager/interfaces';
 
@@ -54,6 +54,9 @@ describe('jobSyncerManager', () => {
     it('When has in-progress job, should progress them and update job-manager', async () => {
       const jobs = createJobs();
       jobManagerClientMock.getJobs.mockResolvedValue(jobs);
+      const jobWithParameters = jobs[0];
+      jobWithParameters.parameters = createJobParameters();
+      jobManagerClientMock.getJob.mockResolvedValue(jobWithParameters);
       jobManagerClientMock.updateJob.mockResolvedValue(undefined);
       catalogManagerClientMock.createCatalogMetadata.mockResolvedValue(createFakeMetadata);
 
