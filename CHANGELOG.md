@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.4.0](https://github.com/MapColonies/job-syncer/compare/v2.3.5...v2.4.0) (2025-03-17)
+
+
+### Features
+
+* add name to links ([#32](https://github.com/MapColonies/job-syncer/issues/32)) ([9f295f3](https://github.com/MapColonies/job-syncer/commit/9f295f35c88b7920c9276dc730b76e54cf3f732c))
+
 ### [2.3.5](https://github.com/MapColonies/job-syncer/compare/v2.3.4...v2.3.5) (2025-03-10)
 
 ### [2.3.4](https://github.com/MapColonies/job-syncer/compare/v2.3.3...v2.3.4) (2025-03-06)
