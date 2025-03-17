@@ -63,7 +63,7 @@ describe('jobSyncerManager', () => {
 
       const expectedLink = config.get<Link>('catalog.link');
       const pathToTileset = finishedJobWithParameters.parameters.pathToTileset.replace(/^[^/]+/, finishedJobWithParameters.parameters.modelId);
-      const expectedLinkName = `${finishedJobWithParameters.parameters.metadata.productId}-${finishedJobWithParameters.parameters.metadata.productType}`;
+      const expectedLinkName = `${finishedJobWithParameters.parameters.modelId}-${finishedJobWithParameters.parameters.metadata.productType}`;
       const expectedLinks: Link[] = [
         {
           ...expectedLink,
