@@ -1,8 +1,10 @@
 import { container } from 'tsyringe';
+import config from 'config';
 import jsLogger from '@map-colonies/js-logger';
 import mockAxios from 'jest-mock-axios';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { trace } from '@opentelemetry/api';
+import { I3DCatalogUpsertRequestBody, Link } from '@map-colonies/mc-model-types';
 import { getApp } from '../../../src/app';
 import { SERVICES } from '../../../src/common/constants';
 import { JobSyncerManager } from '../../../src/jobSyncerManager/jobSyncer';
@@ -58,6 +60,24 @@ describe('jobSyncerManager', () => {
       expect(jobManagerClientMock.getJobs).toHaveBeenCalled();
       expect(jobManagerClientMock.updateJob).toHaveBeenCalledTimes(jobs.length);
       expect(mockAxios.post).toHaveBeenCalledTimes(completedJobsCount);
+
+      const expectedLink = config.get<Link>('catalog.link');
+      const pathToTileset = finishedJobWithParameters.parameters.pathToTileset.replace(/^[^/]+/, finishedJobWithParameters.parameters.modelId);
+      const expectedLinkName = `${finishedJobWithParameters.parameters.metadata.productId}-${finishedJobWithParameters.parameters.metadata.productType}`;
+      const expectedLinks: Link[] = [
+        {
+          ...expectedLink,
+          name: expectedLinkName,
+          url: `${expectedLink.url}/${pathToTileset}/${finishedJobWithParameters.parameters.tilesetFilename}`,
+        },
+      ];
+      const expectedCatalogMetadata: I3DCatalogUpsertRequestBody = {
+        ...finishedJobWithParameters.parameters.metadata,
+        links: expectedLinks,
+        id: finishedJobWithParameters.parameters.modelId,
+      };
+      const catalogUrl = config.get<string>('catalog.url');
+      expect(mockAxios.post).toHaveBeenCalledWith(`${catalogUrl}/metadata`, expectedCatalogMetadata);
     });
 
     it('When there is a problem with the catalog, it should update the job-manager', async () => {

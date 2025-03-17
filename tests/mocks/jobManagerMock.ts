@@ -1,4 +1,4 @@
-import { Layer3DMetadata } from '@map-colonies/mc-model-types';
+import { Layer3DMetadata, ProductType } from '@map-colonies/mc-model-types';
 import { IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { faker } from '@faker-js/faker';
 import { IJobParameters, ITaskParameters } from '../../src/jobSyncerManager/interfaces';
@@ -14,7 +14,10 @@ export const jobManagerClientMock = {
 
 export const createJobParameters = (): IJobParameters => {
   return {
-    metadata: {} as Layer3DMetadata,
+    metadata: {
+      productId: 'productIdTest',
+      productType: ProductType.PHOTO_REALISTIC_3D,
+    } as Layer3DMetadata,
     modelId: faker.string.uuid(),
     tilesetFilename: faker.string.uuid(),
     filesCount: faker.number.int(),

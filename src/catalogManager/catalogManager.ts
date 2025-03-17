@@ -32,7 +32,8 @@ export class CatalogManager {
     const logContext = { ...this.logContext, function: this.createCatalogMetadata.name };
 
     const pathToTileset = jobParameters.pathToTileset.replace(/^[^/]+/, jobParameters.modelId);
-    const links: Link[] = [{ ...this.link, url: `${this.link.url}/${pathToTileset}/${jobParameters.tilesetFilename}` }];
+    const linkName = `${jobParameters.metadata.productId}-${jobParameters.metadata.productType}`;
+    const links: Link[] = [{ ...this.link, name: linkName, url: `${this.link.url}/${pathToTileset}/${jobParameters.tilesetFilename}` }];
     const metadata: I3DCatalogUpsertRequestBody = {
       ...jobParameters.metadata,
       links,
