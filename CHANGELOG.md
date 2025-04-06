@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.5.0](https://github.com/MapColonies/job-syncer/compare/v2.3.4...v2.5.0) (2025-04-06)
+
+
+### Features
+
+* add name to links ([#32](https://github.com/MapColonies/job-syncer/issues/32)) ([9f295f3](https://github.com/MapColonies/job-syncer/commit/9f295f35c88b7920c9276dc730b76e54cf3f732c))
+
+
+### Bug Fixes
+
+* fix product id in links ([#33](https://github.com/MapColonies/job-syncer/issues/33)) ([eee30bd](https://github.com/MapColonies/job-syncer/commit/eee30bd71ecf7225f5931dcf3d931df143565022))
+* set name to 120 chars ([#34](https://github.com/MapColonies/job-syncer/issues/34)) ([94c7167](https://github.com/MapColonies/job-syncer/commit/94c71679ba7a01b20d9dfbcd727635d33e066fc6))
+
 ### [2.4.1](https://github.com/MapColonies/job-syncer/compare/v2.4.0...v2.4.1) (2025-03-17)
 
 
