@@ -7,7 +7,7 @@ import { SERVICES } from '../../../src/common/constants';
 import { JobSyncerManager } from '../../../src/jobSyncerManager/jobSyncer';
 import { createJob, createJobParameters, createJobs, jobManagerClientMock } from '../../mocks/jobManagerMock';
 import { catalogManagerClientMock, createFakeMetadata } from '../../mocks/catalogManagerMock';
-import { IJobParameters } from '../../../src/jobSyncerManager/interfaces';
+import { IIngestionJobParameters } from '../../../src/jobSyncerManager/interfaces';
 
 describe('jobSyncerManager', () => {
   let jobSyncerManager: JobSyncerManager;
@@ -89,7 +89,7 @@ describe('jobSyncerManager', () => {
       jobManagerClientMock.getJob.mockResolvedValueOnce(job);
       jobManagerClientMock.updateJob.mockResolvedValueOnce(undefined);
       catalogManagerClientMock.createCatalogMetadata.mockRejectedValueOnce(new Error('problem'));
-      const payload: IUpdateJobBody<IJobParameters> = {
+      const payload: IUpdateJobBody<IIngestionJobParameters> = {
         percentage: 100,
         status: OperationStatus.FAILED,
         reason: 'problem',

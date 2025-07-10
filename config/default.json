@@ -21,7 +21,12 @@
   },
   "jobManager": {
     "url": "http://127.0.0.1:8080",
-    "jobType": "Ingestion_New_3D"
+    "ingestion": {
+      "jobType": "Ingestion_New_3D"
+    },
+    "delete": {
+      "jobType": "Delete_3D"
+    }
   },
   "catalog": {
     "url": "http://127.0.0.1:8083",
