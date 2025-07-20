@@ -55,7 +55,9 @@ export const createJob = (allTasksCompleted = false, hasFailedTasks = false): IJ
   } as unknown as IJobResponse<IIngestionJobParameters, IIngestionTaskParameters>;
 };
 
-export const createJobs = (jobsAmount = faker.number.int({ min: 1, max: maxJobsNumber })): IJobResponse<IIngestionJobParameters, IIngestionTaskParameters>[] => {
+export const createJobs = (
+  jobsAmount = faker.number.int({ min: 1, max: maxJobsNumber })
+): IJobResponse<IIngestionJobParameters, IIngestionTaskParameters>[] => {
   const jobs: IJobResponse<IIngestionJobParameters, IIngestionTaskParameters>[] = [];
   for (let index = 1; index < jobsAmount; index++) {
     jobs.push(createJob(faker.datatype.boolean()));

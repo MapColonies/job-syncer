@@ -4,10 +4,10 @@ import { I3DCatalogUpsertRequestBody, Link, Pycsw3DCatalogRecord } from '@map-co
 import axios from 'axios';
 import { Tracer } from '@opentelemetry/api';
 import { withSpanAsyncV4 } from '@map-colonies/telemetry';
+import { StatusCodes } from 'http-status-codes';
 import { IConfig, IFindRecordsPayload, LogContext } from '../common/interfaces';
 import { IIngestionJobParameters } from '../jobSyncerManager/interfaces';
 import { SERVICES } from '../common/constants';
-import { StatusCodes } from 'http-status-codes';
 
 @injectable()
 export class CatalogManager {
@@ -63,7 +63,7 @@ export class CatalogManager {
   public async deleteCatalogMetadata(id: string): Promise<void> {
     this.logger.debug({ msg: 'Starting delete catalog record', modelId: id });
     await axios.delete(`${this.catalogUrl}/metadata/${id}`);
-    this.logger.debug({ msg: 'Finishing deleteMetadata', id: id});
+    this.logger.debug({ msg: 'Finishing deleteMetadata', id: id });
   }
 
   @withSpanAsyncV4

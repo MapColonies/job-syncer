@@ -30,5 +30,6 @@ data:
   LINK_URL: {{ .Values.env.catalog.link.url | quote }}
   LINK_PROTOCOL: {{ .Values.env.catalog.link.protocol | quote }}
   JOB_MANAGER_URL: {{ $jobManager.url | quote }}
-  INGESTION_JOB_TYPE: {{ $jobManager.job.type | quote }}
+  JOB_INGESTION_TYPE: {{ $jobManager.ingestion.jobType | quote }}
+  JOB_DELETE_TYPE: {{ $jobManager.delete.jobType | quote }}
   SERVER_PORT: {{ .Values.env.targetPort | quote }}

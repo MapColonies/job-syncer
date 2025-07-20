@@ -1,6 +1,6 @@
 global:
   cloudProvider:
-    dockerRegistryUrl: 
+    dockerRegistryUrl: registry
     flavor: openshift
     imagePullSecretName: 
   imagePullPolicy: IfNotPresent
@@ -9,9 +9,11 @@ global:
   environment: development
   
   jobManager:
-    url: 
-    job:
-      type: 
+    url:
+    ingestion:
+      jobType:
+    delete:
+      jobType:
 
 cloudProvider:
     dockerRegistryUrl:

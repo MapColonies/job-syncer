@@ -1,6 +1,6 @@
 import { Logger } from '@map-colonies/js-logger';
 import { Pycsw3DCatalogRecord } from '@map-colonies/mc-model-types';
-import { IFindJobsByCriteriaBody, IFindJobsRequest, IJobResponse, IUpdateJobBody, JobManagerClient, OperationStatus } from '@map-colonies/mc-priority-queue';
+import { IFindJobsByCriteriaBody, IJobResponse, IUpdateJobBody, JobManagerClient, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { IConfig } from 'config';
 import { inject, injectable } from 'tsyringe';
 import { Tracer, trace } from '@opentelemetry/api';
@@ -57,32 +57,54 @@ export class JobSyncerManager {
   }
 
   @withSpanAsyncV4
-  private async handleDeleteJob(job: IJobResponse<IDeleteJobParameters, unknown>) {
+  private async handleDeleteJob(job: IJobResponse<IDeleteJobParameters, unknown>): Promise<void> {
     const logContext = { ...this.logContext, function: this.handleDeleteJob.name };
     const isJobCompleted = job.completedTasks === job.taskCount;
     if (isJobCompleted) {
       // delete from catalog
       try {
         const records = await this.catalogManagerClient.findRecords({ id: job.parameters.modelId });
-        if (records.length == 1) {
-          await this.catalogManagerClient.deleteCatalogMetadata(job.parameters.modelId);    
+
+        if (Array.isArray(records)) {
+          if (records.length == 0) {
+            this.logger.warn({
+              msg: `didn't found a record with id ${job.parameters.modelId} after delete task was finished`,
+              logContext,
+              [INFRA_CONVENTIONS.infra.jobManagement.jobId]: job.id,
+              [INFRA_CONVENTIONS.infra.jobManagement.jobType]: DELETE_JOB_TYPE,
+              [THREE_D_CONVENTIONS.three_d.catalogManager.catalogId]: job.resourceId,
+            });
+          } else {
+            if (records.length > 1) {
+              this.logger.warn({
+                msg: `found more than one record with id ${job.parameters.modelId} after delete task was finished`,
+                logContext,
+                [INFRA_CONVENTIONS.infra.jobManagement.jobId]: job.id,
+                [INFRA_CONVENTIONS.infra.jobManagement.jobType]: DELETE_JOB_TYPE,
+                [THREE_D_CONVENTIONS.three_d.catalogManager.catalogId]: job.resourceId,
+              });
+            }
+            await this.catalogManagerClient.deleteCatalogMetadata(job.parameters.modelId);
+          }
         }
+        // close the job
+        const jobPayload = this.buildJobPayload(job, OperationStatus.COMPLETED, null);
+        await this.jobManagerClient.updateJob(job.id, jobPayload);
       } catch (err) {
         this.logger.error({
+          msg: `failed to finish delete job with id ${job.parameters.modelId}`,
           err,
           logContext,
           [INFRA_CONVENTIONS.infra.jobManagement.jobId]: job.id,
-          [INFRA_CONVENTIONS.infra.jobManagement.jobType]: INGESTION_JOB_TYPE,
+          [INFRA_CONVENTIONS.infra.jobManagement.jobType]: DELETE_JOB_TYPE,
           [THREE_D_CONVENTIONS.three_d.catalogManager.catalogId]: job.resourceId,
         });
       }
-      // close the job
-      this.jobManagerClient.updateJob()
     }
   }
 
   @withSpanAsyncV4
-  private async handleIngestionJob(job: IJobResponse<IIngestionJobParameters, IIngestionTaskParameters>) {
+  private async handleIngestionJob(job: IJobResponse<IIngestionJobParameters, IIngestionTaskParameters>): Promise<void> {
     const logContext = { ...this.logContext, function: this.handleIngestionJob.name };
     let catalogMetadata: Pycsw3DCatalogRecord | null = null;
     let reason: string | null = null;
@@ -137,7 +159,7 @@ export class JobSyncerManager {
   @withSpanAsyncV4
   private async getInProgressJobs(): Promise<IJobResponse<unknown, unknown>[]> {
     const logContext = { ...this.logContext, function: this.getInProgressJobs.name };
-    
+
     const findJobsBody: IFindJobsByCriteriaBody = {
       statuses: [OperationStatus.IN_PROGRESS],
       types: [INGESTION_JOB_TYPE, DELETE_JOB_TYPE],
@@ -149,9 +171,9 @@ export class JobSyncerManager {
       logContext,
       queryParams: findJobsBody,
     });
-    
+
     const jobs = await this.jobManagerClient.findJobs(findJobsBody);
-   
+
     this.logger.debug({
       msg: 'Finishing getInProgressJobs',
       logContext,
@@ -214,7 +236,7 @@ export class JobSyncerManager {
   }
 
   private buildJobPayload(
-    job: IJobResponse<IIngestionJobParameters, IIngestionTaskParameters>,
+    job: IJobResponse<IIngestionJobParameters | IDeleteJobParameters, unknown>,
     status: OperationStatus,
     reason: string | null
   ): IUpdateJobBody<IIngestionJobParameters> {
@@ -231,7 +253,11 @@ export class JobSyncerManager {
     return payload;
   }
 
-  private getStatus(job: IJobResponse<IIngestionJobParameters, IIngestionTaskParameters>, isJobCompleted: boolean, isCreateCatalogSuccess: boolean): OperationStatus {
+  private getStatus(
+    job: IJobResponse<IIngestionJobParameters, IIngestionTaskParameters>,
+    isJobCompleted: boolean,
+    isCreateCatalogSuccess: boolean
+  ): OperationStatus {
     const isJobNeedToFail = job.failedTasks > 0 && job.inProgressTasks === 0 && job.pendingTasks === 0;
 
     if (!isCreateCatalogSuccess || isJobNeedToFail) {
