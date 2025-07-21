@@ -6,11 +6,13 @@ import { IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { trace } from '@opentelemetry/api';
 import { I3DCatalogUpsertRequestBody, Link } from '@map-colonies/mc-model-types';
 import { getApp } from '../../../src/app';
-import { INGESTION_JOB_TYPE, SERVICES } from '../../../src/common/constants';
+import { DELETE_JOB_TYPE, INGESTION_JOB_TYPE, SERVICES } from '../../../src/common/constants';
 import { JobSyncerManager } from '../../../src/jobSyncerManager/jobSyncer';
 import { createJob, createIngestionJobParameters, createJobs, jobManagerClientMock } from '../../mocks/jobManagerMock';
-import { catalogManagerClientMock, createFakeMetadata } from '../../mocks/catalogManagerMock';
+import { createFakeMetadata } from '../../mocks/catalogManagerMock';
 import { IIngestionJobParameters } from '../../../src/jobSyncerManager/interfaces';
+import { faker } from '@faker-js/faker';
+import { StatusCodes } from 'http-status-codes';
 
 describe('jobSyncerManager', () => {
   let jobSyncerManager: JobSyncerManager;
@@ -34,7 +36,57 @@ describe('jobSyncerManager', () => {
     mockAxios.reset();
   });
 
-  describe('handleInProgressJobs', () => {
+  describe('Delete handleInProgressJobs', () => {
+    it('When has In-Progress Delete job, should close the job and delete record metadata from catalog serviec', async () => {
+      const deleteJob = createJob(DELETE_JOB_TYPE, true);
+      const modelId = faker.word.sample();
+      deleteJob.parameters = {
+        modelId: modelId,
+      };
+      jobManagerClientMock.findJobs.mockResolvedValueOnce([deleteJob]);
+      const axiosResponse = {
+        status: StatusCodes.OK,
+        data: [{}],
+      };
+      mockAxios.post.mockResolvedValueOnce(axiosResponse);
+      mockAxios.delete.mockResolvedValueOnce(undefined);
+
+      const response = await jobSyncerManager.handleInProgressJobs();
+      
+      expect(jobManagerClientMock.findJobs).toHaveBeenCalled();
+      expect(mockAxios.post).toHaveBeenCalled();
+      expect(jobManagerClientMock.updateJob).toHaveBeenCalled();
+      const catalogUrl = config.get<string>('catalog.url');
+      expect(mockAxios.delete).toHaveBeenCalledWith(`${catalogUrl}/metadata/${modelId}`);
+      expect(response).toBeTruthy();
+    });
+
+    it('When has In-Progress Delete job, should close the job and if record does not exists in catalog dont send delete message', async () => {
+      const deleteJob = createJob(DELETE_JOB_TYPE, true);
+      const modelId = faker.word.sample();
+      deleteJob.parameters = {
+        modelId: modelId,
+      };
+      jobManagerClientMock.findJobs.mockResolvedValueOnce([deleteJob]);
+      const axiosResponse = {
+        status: StatusCodes.OK,
+        data: [],
+      };
+      mockAxios.post.mockResolvedValueOnce(axiosResponse);
+      mockAxios.delete.mockResolvedValueOnce(undefined);
+
+      const response = await jobSyncerManager.handleInProgressJobs();
+      
+      expect(jobManagerClientMock.findJobs).toHaveBeenCalled();
+      expect(mockAxios.post).toHaveBeenCalled();
+      expect(jobManagerClientMock.updateJob).toHaveBeenCalled();
+      const catalogUrl = config.get<string>('catalog.url');
+      expect(mockAxios.delete).not.toHaveBeenCalled();
+      expect(response).toBeTruthy();
+    });
+  });
+
+  describe('Ingestion handleInProgressJobs', () => {
     it('When has completed job, it should insert the metadata to the catalog service', async () => {
       const finishedJob = createJob(INGESTION_JOB_TYPE, true);
       const jobs: IJobResponse<unknown, unknown>[] = [finishedJob];
@@ -129,7 +181,6 @@ describe('jobSyncerManager', () => {
       job.parameters = createIngestionJobParameters();
       jobManagerClientMock.findJobs.mockResolvedValueOnce(jobs);
       jobManagerClientMock.getJob.mockResolvedValueOnce(job);
-      catalogManagerClientMock.createCatalogMetadata.mockResolvedValueOnce(undefined);
       jobManagerClientMock.updateJob.mockRejectedValueOnce(new Error('problem'));
       mockAxios.post.mockResolvedValueOnce({ data: createFakeMetadata });
       mockAxios.delete.mockResolvedValueOnce({ data: createFakeMetadata });
