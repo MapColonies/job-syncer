@@ -5,14 +5,14 @@ import mockAxios from 'jest-mock-axios';
 import { IJobResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { trace } from '@opentelemetry/api';
 import { I3DCatalogUpsertRequestBody, Link } from '@map-colonies/mc-model-types';
+import { faker } from '@faker-js/faker';
+import { StatusCodes } from 'http-status-codes';
 import { getApp } from '../../../src/app';
 import { DELETE_JOB_TYPE, INGESTION_JOB_TYPE, SERVICES } from '../../../src/common/constants';
 import { JobSyncerManager } from '../../../src/jobSyncerManager/jobSyncer';
-import { createJob, createIngestionJobParameters, createJobs, jobManagerClientMock } from '../../mocks/jobManagerMock';
+import { createJob, createIngestionJobParameters, jobManagerClientMock } from '../../mocks/jobManagerMock';
 import { createFakeMetadata } from '../../mocks/catalogManagerMock';
 import { IIngestionJobParameters } from '../../../src/jobSyncerManager/interfaces';
-import { faker } from '@faker-js/faker';
-import { StatusCodes } from 'http-status-codes';
 
 describe('jobSyncerManager', () => {
   let jobSyncerManager: JobSyncerManager;
@@ -52,7 +52,7 @@ describe('jobSyncerManager', () => {
       mockAxios.delete.mockResolvedValueOnce(undefined);
 
       const response = await jobSyncerManager.handleInProgressJobs();
-      
+
       expect(jobManagerClientMock.findJobs).toHaveBeenCalled();
       expect(mockAxios.post).toHaveBeenCalled();
       expect(jobManagerClientMock.updateJob).toHaveBeenCalled();
@@ -76,11 +76,10 @@ describe('jobSyncerManager', () => {
       mockAxios.delete.mockResolvedValueOnce(undefined);
 
       const response = await jobSyncerManager.handleInProgressJobs();
-      
+
       expect(jobManagerClientMock.findJobs).toHaveBeenCalled();
       expect(mockAxios.post).toHaveBeenCalled();
       expect(jobManagerClientMock.updateJob).toHaveBeenCalled();
-      const catalogUrl = config.get<string>('catalog.url');
       expect(mockAxios.delete).not.toHaveBeenCalled();
       expect(response).toBeTruthy();
     });
@@ -90,7 +89,7 @@ describe('jobSyncerManager', () => {
     it('When has completed job, it should insert the metadata to the catalog service', async () => {
       const finishedJob = createJob(INGESTION_JOB_TYPE, true);
       const jobs: IJobResponse<unknown, unknown>[] = [finishedJob];
-      
+
       const finishedJobWithParameters = createJob(INGESTION_JOB_TYPE, true);
       finishedJobWithParameters.parameters = createIngestionJobParameters();
       jobManagerClientMock.findJobs.mockResolvedValueOnce(jobs);
@@ -175,7 +174,7 @@ describe('jobSyncerManager', () => {
     });
 
     it('When there is a problem with job-manager, it should remove the new record from DB', async () => {
-      const job = createJob(INGESTION_JOB_TYPE, true)
+      const job = createJob(INGESTION_JOB_TYPE, true);
       const jobs = [job];
 
       job.parameters = createIngestionJobParameters();
