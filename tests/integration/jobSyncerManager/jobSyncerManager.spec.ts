@@ -41,11 +41,11 @@ describe('jobSyncerManager', () => {
       
       const finishedJobWithParameters = createJob(INGESTION_JOB_TYPE, true);
       finishedJobWithParameters.parameters = createIngestionJobParameters();
-      jobManagerClientMock.findJobs.mockResolvedValue(jobs);
-      jobManagerClientMock.getJob.mockResolvedValue(finishedJobWithParameters);
-      jobManagerClientMock.updateJob.mockResolvedValue(undefined);
+      jobManagerClientMock.findJobs.mockResolvedValueOnce(jobs);
+      jobManagerClientMock.getJob.mockResolvedValueOnce(finishedJobWithParameters);
+      jobManagerClientMock.updateJob.mockResolvedValueOnce(undefined);
       const metadata = createFakeMetadata;
-      mockAxios.post.mockResolvedValue({ data: metadata });
+      mockAxios.post.mockResolvedValueOnce({ data: metadata });
       const completedJobsCount = jobs.filter((job) => job.completedTasks === job.taskCount).length;
 
       await jobSyncerManager.handleInProgressJobs();
@@ -75,20 +75,20 @@ describe('jobSyncerManager', () => {
     });
 
     it('When there is a problem with the catalog, it should update the job-manager', async () => {
-      const jobs = createJobs();
-      jobs.push(createJob(INGESTION_JOB_TYPE, true));
+      const job = createJob(INGESTION_JOB_TYPE, true);
+      const jobs = [job] as unknown as IJobResponse<IIngestionJobParameters, unknown>[];
       const completedJobsPosition: number[] = [];
       for (let index = 0; index < jobs.length; index++) {
         if (jobs[index].completedTasks === jobs[index].taskCount) {
           completedJobsPosition.push(index);
         }
       }
-      jobManagerClientMock.findJobs.mockResolvedValue(jobs);
+      jobManagerClientMock.findJobs.mockResolvedValueOnce(jobs);
       const jobWithParameters = jobs[0];
       jobWithParameters.parameters = createIngestionJobParameters();
-      jobManagerClientMock.getJob.mockResolvedValue(jobWithParameters);
-      jobManagerClientMock.updateJob.mockResolvedValue(undefined);
-      mockAxios.post.mockRejectedValue(new Error('problem'));
+      jobManagerClientMock.getJob.mockResolvedValueOnce(jobWithParameters);
+      jobManagerClientMock.updateJob.mockResolvedValueOnce(undefined);
+      mockAxios.post.mockRejectedValueOnce(new Error('problem'));
       const payload = {
         percentage: 100,
         reason: 'problem',
@@ -110,8 +110,8 @@ describe('jobSyncerManager', () => {
 
     it('When there is a problem with job-manager, it should throw an error', async () => {
       const job = [createJob(INGESTION_JOB_TYPE, false)];
-      jobManagerClientMock.findJobs.mockResolvedValue(job);
-      jobManagerClientMock.updateJob.mockRejectedValue(new Error('problem'));
+      jobManagerClientMock.findJobs.mockResolvedValueOnce(job);
+      jobManagerClientMock.updateJob.mockRejectedValueOnce(new Error('problem'));
 
       const response = jobSyncerManager.handleInProgressJobs();
 
@@ -127,12 +127,12 @@ describe('jobSyncerManager', () => {
       const jobs = [job];
 
       job.parameters = createIngestionJobParameters();
-      jobManagerClientMock.findJobs.mockResolvedValue(jobs);
-      jobManagerClientMock.getJob.mockResolvedValue(job);
-      catalogManagerClientMock.createCatalogMetadata.mockResolvedValue(undefined);
-      jobManagerClientMock.updateJob.mockRejectedValue(new Error('problem'));
-      mockAxios.post.mockResolvedValue({ data: createFakeMetadata });
-      mockAxios.delete.mockResolvedValue({ data: createFakeMetadata });
+      jobManagerClientMock.findJobs.mockResolvedValueOnce(jobs);
+      jobManagerClientMock.getJob.mockResolvedValueOnce(job);
+      catalogManagerClientMock.createCatalogMetadata.mockResolvedValueOnce(undefined);
+      jobManagerClientMock.updateJob.mockRejectedValueOnce(new Error('problem'));
+      mockAxios.post.mockResolvedValueOnce({ data: createFakeMetadata });
+      mockAxios.delete.mockResolvedValueOnce({ data: createFakeMetadata });
 
       const response = jobSyncerManager.handleInProgressJobs();
 
