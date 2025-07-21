@@ -6,10 +6,11 @@ import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { trace } from '@opentelemetry/api';
 import { I3DCatalogUpsertRequestBody, Link } from '@map-colonies/mc-model-types';
 import { getApp } from '../../../src/app';
-import { SERVICES } from '../../../src/common/constants';
+import { INGESTION_JOB_TYPE, SERVICES } from '../../../src/common/constants';
 import { JobSyncerManager } from '../../../src/jobSyncerManager/jobSyncer';
-import { createJob, createJobParameters, createJobs, jobManagerClientMock } from '../../mocks/jobManagerMock';
+import { createJob, createIngestionJobParameters, createJobs, jobManagerClientMock } from '../../mocks/jobManagerMock';
 import { createFakeMetadata } from '../../mocks/catalogManagerMock';
+import { IIngestionJobParameters } from '../../../src/jobSyncerManager/interfaces';
 
 describe('jobSyncerManager', () => {
   let jobSyncerManager: JobSyncerManager;
@@ -31,23 +32,13 @@ describe('jobSyncerManager', () => {
     mockAxios.reset();
   });
 
-  describe('execute', () => {
-    it('When has an active job, it should not start another job', async () => {
-      jobSyncerManager['isActive'] = true;
-
-      await jobSyncerManager.execute();
-
-      expect(jobManagerClientMock.getJobs).not.toHaveBeenCalled();
-      expect(jobManagerClientMock.updateJob).not.toHaveBeenCalled();
-      expect(mockAxios.post).not.toHaveBeenCalled();
-    });
-
+  describe('handleInProgressJobs', () => {
     it('When has completed job, it should insert the metadata to the catalog service', async () => {
       const jobs = createJobs();
-      const finishedJob = createJob(true);
+      const finishedJob = createJob(INGESTION_JOB_TYPE, true);
       jobs.push(finishedJob);
-      const finishedJobWithParameters = createJob(true);
-      finishedJobWithParameters.parameters = createJobParameters();
+      const finishedJobWithParameters = createJob(INGESTION_JOB_TYPE, true);
+      finishedJobWithParameters.parameters = createIngestionJobParameters();
       jobManagerClientMock.getJobs.mockResolvedValue(jobs);
       jobManagerClientMock.getJob.mockResolvedValue(finishedJobWithParameters);
       jobManagerClientMock.updateJob.mockResolvedValue(undefined);
@@ -55,26 +46,27 @@ describe('jobSyncerManager', () => {
       mockAxios.post.mockResolvedValue({ data: metadata });
       const completedJobsCount = jobs.filter((job) => job.completedTasks === job.taskCount).length;
 
-      await jobSyncerManager.execute();
+      await jobSyncerManager.handleInProgressJobs();
 
       expect(jobManagerClientMock.getJobs).toHaveBeenCalled();
       expect(jobManagerClientMock.updateJob).toHaveBeenCalledTimes(jobs.length);
       expect(mockAxios.post).toHaveBeenCalledTimes(completedJobsCount);
 
       const expectedLink = config.get<Link>('catalog.link');
-      const pathToTileset = finishedJobWithParameters.parameters.pathToTileset.replace(/^[^/]+/, finishedJobWithParameters.parameters.modelId);
-      const expectedLinkName = `${finishedJobWithParameters.parameters.modelId}-${finishedJobWithParameters.parameters.metadata.productType}`;
+      const parameters = finishedJobWithParameters.parameters as IIngestionJobParameters;
+      const pathToTileset = parameters.pathToTileset.replace(/^[^/]+/, parameters.modelId);
+      const expectedLinkName = `${parameters.modelId}-${parameters.metadata.productType}`;
       const expectedLinks: Link[] = [
         {
           ...expectedLink,
           name: expectedLinkName,
-          url: `${expectedLink.url}/${pathToTileset}/${finishedJobWithParameters.parameters.tilesetFilename}`,
+          url: `${expectedLink.url}/${pathToTileset}/${parameters.tilesetFilename}`,
         },
       ];
       const expectedCatalogMetadata: I3DCatalogUpsertRequestBody = {
-        ...finishedJobWithParameters.parameters.metadata,
+        ...parameters.metadata,
         links: expectedLinks,
-        id: finishedJobWithParameters.parameters.modelId,
+        id: parameters.modelId,
       };
       const catalogUrl = config.get<string>('catalog.url');
       expect(mockAxios.post).toHaveBeenCalledWith(`${catalogUrl}/metadata`, expectedCatalogMetadata);
@@ -82,7 +74,7 @@ describe('jobSyncerManager', () => {
 
     it('When there is a problem with the catalog, it should update the job-manager', async () => {
       const jobs = createJobs();
-      jobs.push(createJob(true));
+      jobs.push(createJob(INGESTION_JOB_TYPE, true));
       const completedJobsPosition: number[] = [];
       for (let index = 0; index < jobs.length; index++) {
         if (jobs[index].completedTasks === jobs[index].taskCount) {
@@ -91,7 +83,7 @@ describe('jobSyncerManager', () => {
       }
       jobManagerClientMock.getJobs.mockResolvedValue(jobs);
       const jobWithParameters = jobs[0];
-      jobWithParameters.parameters = createJobParameters();
+      jobWithParameters.parameters = createIngestionJobParameters();
       jobManagerClientMock.getJob.mockResolvedValue(jobWithParameters);
       jobManagerClientMock.updateJob.mockResolvedValue(undefined);
       mockAxios.post.mockRejectedValue(new Error('problem'));
@@ -101,7 +93,7 @@ describe('jobSyncerManager', () => {
         status: OperationStatus.FAILED,
       };
 
-      await jobSyncerManager.execute();
+      await jobSyncerManager.handleInProgressJobs();
 
       expect(jobManagerClientMock.getJobs).toHaveBeenCalled();
       expect(jobManagerClientMock.updateJob).toHaveBeenCalledTimes(jobs.length);
@@ -115,11 +107,11 @@ describe('jobSyncerManager', () => {
     });
 
     it('When there is a problem with job-manager, it should throw an error', async () => {
-      const job = [createJob(false)];
+      const job = [createJob(INGESTION_JOB_TYPE, false)];
       jobManagerClientMock.getJobs.mockResolvedValue(job);
       jobManagerClientMock.updateJob.mockRejectedValue(new Error('problem'));
 
-      const response = jobSyncerManager.execute();
+      const response = jobSyncerManager.handleInProgressJobs();
 
       await expect(response).rejects.toThrow(Error);
       expect(mockAxios.post).not.toHaveBeenCalled();
@@ -129,13 +121,13 @@ describe('jobSyncerManager', () => {
     });
 
     it('When there is a problem with job-manager, it should remove the new record from DB', async () => {
-      const job = [createJob(true)];
+      const job = [createJob(INGESTION_JOB_TYPE, true)];
       jobManagerClientMock.getJobs.mockResolvedValue(job);
       jobManagerClientMock.updateJob.mockRejectedValue(new Error('problem'));
       mockAxios.post.mockResolvedValue({ data: createFakeMetadata });
       mockAxios.delete.mockResolvedValue({ data: createFakeMetadata });
 
-      const response = jobSyncerManager.execute();
+      const response = jobSyncerManager.handleInProgressJobs();
 
       await expect(response).rejects.toThrow(Error);
       expect(mockAxios.delete).toHaveBeenCalled();

@@ -1,3 +1,4 @@
+import { setTimeout as setTimeoutPromise } from 'timers/promises';
 import { inject, singleton } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
 import { IConfig } from 'config';
@@ -39,7 +40,7 @@ export class App {
     };
   }
 
-  public run(): void {
+  public async run(): Promise<void> {
     const logContext = { ...this.logContext, function: this.run.name };
     this.logger.info({
       msg: 'Starting jobSyncer',
@@ -53,11 +54,24 @@ export class App {
       });
     });
 
-    setInterval(() => {
-      void (async (): Promise<void> => {
-        await this.jobSyncerManager.execute();
-      })();
-    }, this.intervalMs);
+    await this.mainLoop();
+  }
+
+  private async mainLoop(): Promise<void> {
+    const isRunning = true;
+    //eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    while (isRunning) {
+      try {
+        await this.jobSyncerManager.handleInProgressJobs();
+        await setTimeoutPromise(this.intervalMs);
+      } catch (err) {
+        this.logger.error({
+          msg: `mainLoop: Error: ${JSON.stringify(err, Object.getOwnPropertyNames(err))}`,
+          err,
+        });
+        await setTimeoutPromise(this.intervalMs);
+      }
+    }
   }
 }
 

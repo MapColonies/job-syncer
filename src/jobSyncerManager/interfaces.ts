@@ -8,12 +8,12 @@ export interface IIngestionJobParameters {
   pathToTileset: string;
 }
 
-export interface IDeleteJobParameters {
+export interface IIngestionTaskParameters {
+  paths: string[];
   modelId: string;
 }
 
-export interface IIngestionTaskParameters {
-  paths: string[];
+export interface IDeleteJobParameters {
   modelId: string;
 }
 

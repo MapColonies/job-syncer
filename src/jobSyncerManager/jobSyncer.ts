@@ -13,7 +13,6 @@ import { LogContext } from '../common/interfaces';
 
 @injectable()
 export class JobSyncerManager {
-  private isActive: boolean;
   private readonly logContext: LogContext;
 
   public constructor(
@@ -23,7 +22,6 @@ export class JobSyncerManager {
     @inject(SERVICES.JOB_MANAGER_CLIENT) private readonly jobManagerClient: JobManagerClient,
     @inject(SERVICES.CATALOG_MANAGER) private readonly catalogManagerClient: CatalogManager
   ) {
-    this.isActive = false;
     this.logContext = {
       fileName: __filename,
       class: JobSyncerManager.name,
@@ -38,7 +36,7 @@ export class JobSyncerManager {
       const spanActive = trace.getActiveSpan();
       spanActive?.setAttributes({
         [INFRA_CONVENTIONS.infra.jobManagement.jobId]: job.id,
-        [INFRA_CONVENTIONS.infra.jobManagement.jobType]: INGESTION_JOB_TYPE,
+        [INFRA_CONVENTIONS.infra.jobManagement.jobType]: job.type,
         [THREE_D_CONVENTIONS.three_d.catalogManager.catalogId]: job.resourceId,
       });
 
@@ -64,7 +62,6 @@ export class JobSyncerManager {
       // delete from catalog
       try {
         const records = await this.catalogManagerClient.findRecords({ id: job.parameters.modelId });
-
         if (Array.isArray(records)) {
           if (records.length == 0) {
             this.logger.warn({
@@ -96,7 +93,7 @@ export class JobSyncerManager {
           err,
           logContext,
           [INFRA_CONVENTIONS.infra.jobManagement.jobId]: job.id,
-          [INFRA_CONVENTIONS.infra.jobManagement.jobType]: DELETE_JOB_TYPE,
+          [INFRA_CONVENTIONS.infra.jobManagement.jobType]: job.type,
           [THREE_D_CONVENTIONS.three_d.catalogManager.catalogId]: job.resourceId,
         });
       }
@@ -121,7 +118,7 @@ export class JobSyncerManager {
           modelId: jobParameters.modelId,
           modelName: jobParameters.metadata.productName,
           [INFRA_CONVENTIONS.infra.jobManagement.jobId]: job.id,
-          [INFRA_CONVENTIONS.infra.jobManagement.jobType]: INGESTION_JOB_TYPE,
+          [INFRA_CONVENTIONS.infra.jobManagement.jobType]: job.type,
           [THREE_D_CONVENTIONS.three_d.catalogManager.catalogId]: job.resourceId,
         });
       }
@@ -130,7 +127,7 @@ export class JobSyncerManager {
         err,
         logContext,
         [INFRA_CONVENTIONS.infra.jobManagement.jobId]: job.id,
-        [INFRA_CONVENTIONS.infra.jobManagement.jobType]: INGESTION_JOB_TYPE,
+        [INFRA_CONVENTIONS.infra.jobManagement.jobType]: job.type,
         [THREE_D_CONVENTIONS.three_d.catalogManager.catalogId]: job.resourceId,
       });
       isCreateCatalogSuccess = false;
@@ -164,6 +161,7 @@ export class JobSyncerManager {
       statuses: [OperationStatus.IN_PROGRESS],
       types: [INGESTION_JOB_TYPE, DELETE_JOB_TYPE],
       shouldReturnTasks: false,
+      shouldReturnAvailableActions: false,
     };
 
     this.logger.debug({
@@ -216,23 +214,19 @@ export class JobSyncerManager {
     }
   }
 
-  public async execute(): Promise<void> {
-    if (this.isActive) {
-      return;
-    }
-    const logContext = { ...this.logContext, function: this.execute.name };
-    this.isActive = true;
+  public async handleInProgressJobs(): Promise<boolean> {
+    const logContext = { ...this.logContext, function: this.handleInProgressJobs.name };
 
     this.logger.debug({
       msg: `Getting In-Progress jobs`,
       logContext,
     });
     const jobs = await this.getInProgressJobs();
-    if (jobs.length > 0) {
+    if (Array.isArray(jobs) && jobs.length > 0) {
       await this.progressJobs(jobs);
+      return true;
     }
-
-    this.isActive = false;
+    return false;
   }
 
   private buildJobPayload(
