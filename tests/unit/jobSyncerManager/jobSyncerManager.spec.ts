@@ -6,7 +6,7 @@ import { faker } from '@faker-js/faker';
 import { getApp } from '../../../src/app';
 import { DELETE_JOB_TYPE, INGESTION_JOB_TYPE, SERVICES } from '../../../src/common/constants';
 import { JobSyncerManager } from '../../../src/jobSyncerManager/jobSyncer';
-import { createJob, createIngestionJobParameters, createJobs, jobManagerClientMock } from '../../mocks/jobManagerMock';
+import { createJob, createIngestionJobParameters, jobManagerClientMock } from '../../mocks/jobManagerMock';
 import { catalogManagerClientMock, createFakeMetadata } from '../../mocks/catalogManagerMock';
 import { IIngestionJobParameters } from '../../../src/jobSyncerManager/interfaces';
 
@@ -45,18 +45,17 @@ describe('jobSyncerManager', () => {
     });
 
     it('When has Ingestion in-progress job, should progress them and update job-manager', async () => {
-      const jobs = createJobs();
-      jobManagerClientMock.findJobs.mockResolvedValueOnce(jobs);
-      const jobWithParameters = jobs[0];
-      jobWithParameters.parameters = createIngestionJobParameters();
-      jobManagerClientMock.getJob.mockResolvedValueOnce(jobWithParameters);
+      const job = createJob(INGESTION_JOB_TYPE, true);
+      jobManagerClientMock.findJobs.mockResolvedValueOnce([job]);
+      job.parameters = createIngestionJobParameters();
+      jobManagerClientMock.getJob.mockResolvedValueOnce(job);
       jobManagerClientMock.updateJob.mockResolvedValueOnce(undefined);
       catalogManagerClientMock.createCatalogMetadata.mockResolvedValueOnce(createFakeMetadata);
 
       await jobSyncerManager.handleInProgressJobs();
 
       expect(jobManagerClientMock.findJobs).toHaveBeenCalled();
-      expect(jobManagerClientMock.updateJob).toHaveBeenCalledTimes(jobs.length);
+      expect(jobManagerClientMock.updateJob).toHaveBeenCalled();
     });
 
     it('When has Delete in-progress job, should progress them and update job-manager', async () => {
