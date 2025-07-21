@@ -9,7 +9,7 @@ import { getApp } from '../../../src/app';
 import { INGESTION_JOB_TYPE, SERVICES } from '../../../src/common/constants';
 import { JobSyncerManager } from '../../../src/jobSyncerManager/jobSyncer';
 import { createJob, createIngestionJobParameters, createJobs, jobManagerClientMock } from '../../mocks/jobManagerMock';
-import { createFakeMetadata } from '../../mocks/catalogManagerMock';
+import { catalogManagerClientMock, createFakeMetadata } from '../../mocks/catalogManagerMock';
 import { IIngestionJobParameters } from '../../../src/jobSyncerManager/interfaces';
 
 describe('jobSyncerManager', () => {
@@ -123,8 +123,13 @@ describe('jobSyncerManager', () => {
     });
 
     it('When there is a problem with job-manager, it should remove the new record from DB', async () => {
-      const jobs = [createJob(INGESTION_JOB_TYPE, true)];
+      const job = createJob(INGESTION_JOB_TYPE, true)
+      const jobs = [job];
+
+      job.parameters = createIngestionJobParameters();
       jobManagerClientMock.findJobs.mockResolvedValue(jobs);
+      jobManagerClientMock.getJob.mockResolvedValue(job);
+      catalogManagerClientMock.createCatalogMetadata.mockResolvedValue(undefined);
       jobManagerClientMock.updateJob.mockRejectedValue(new Error('problem'));
       mockAxios.post.mockResolvedValue({ data: createFakeMetadata });
       mockAxios.delete.mockResolvedValue({ data: createFakeMetadata });
