@@ -2,14 +2,14 @@ import { Logger } from '@map-colonies/js-logger';
 import { Pycsw3DCatalogRecord } from '@map-colonies/mc-model-types';
 import { IFindJobsByCriteriaBody, IJobResponse, IUpdateJobBody, JobManagerClient, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { IConfig } from 'config';
-import { inject, injectable } from 'tsyringe';
+import { injectable, inject } from 'tsyringe';
 import { Tracer, trace } from '@opentelemetry/api';
-import { INFRA_CONVENTIONS, THREE_D_CONVENTIONS } from '@map-colonies/telemetry/conventions';
-import { withSpanAsyncV4 } from '@map-colonies/telemetry';
+import { withSpanAsync } from '@map-colonies/telemetry';
 import { CatalogManager } from '../catalogManager/catalogManager';
 import { DELETE_JOB_TYPE, INGESTION_JOB_TYPE, SERVICES } from '../common/constants';
 import { IDeleteJobParameters, IIngestionJobParameters, IIngestionTaskParameters } from '../jobSyncerManager/interfaces';
 import { LogContext } from '../common/interfaces';
+import { INFRA_CONVENTIONS, THREE_D_CONVENTIONS } from '@map-colonies/telemetry/dist/semanticConventions';
 
 @injectable()
 export class JobSyncerManager {
@@ -28,7 +28,22 @@ export class JobSyncerManager {
     };
   }
 
-  @withSpanAsyncV4
+  public async handleInProgressJobs(): Promise<boolean> {
+    const logContext = { ...this.logContext, function: this.handleInProgressJobs.name };
+
+    this.logger.debug({
+      msg: `Getting In-Progress jobs`,
+      logContext,
+    });
+    const jobs = await this.getInProgressJobs();
+    if (Array.isArray(jobs) && jobs.length > 0) {
+      await this.progressJobs(jobs);
+      return true;
+    }
+    return false;
+  }
+
+  @withSpanAsync
   private async progressJobs(jobs: IJobResponse<unknown, unknown>[]): Promise<void> {
     const logContext = { ...this.logContext, function: this.progressJobs.name };
 
@@ -54,7 +69,7 @@ export class JobSyncerManager {
     }
   }
 
-  @withSpanAsyncV4
+  @withSpanAsync
   private async handleDeleteJob(job: IJobResponse<IDeleteJobParameters, unknown>): Promise<void> {
     const logContext = { ...this.logContext, function: this.handleDeleteJob.name };
     const isJobCompleted = job.completedTasks === job.taskCount;
@@ -100,7 +115,7 @@ export class JobSyncerManager {
     }
   }
 
-  @withSpanAsyncV4
+  @withSpanAsync
   private async handleIngestionJob(job: IJobResponse<IIngestionJobParameters, IIngestionTaskParameters>): Promise<void> {
     const logContext = { ...this.logContext, function: this.handleIngestionJob.name };
     let catalogMetadata: Pycsw3DCatalogRecord | null = null;
@@ -153,7 +168,6 @@ export class JobSyncerManager {
     });
   }
 
-  @withSpanAsyncV4
   private async getInProgressJobs(): Promise<IJobResponse<unknown, unknown>[]> {
     const logContext = { ...this.logContext, function: this.getInProgressJobs.name };
 
@@ -180,7 +194,6 @@ export class JobSyncerManager {
     return jobs;
   }
 
-  @withSpanAsyncV4
   private async handleUpdateJob(jobId: string, payload: IUpdateJobBody<IIngestionJobParameters>): Promise<void> {
     const logContext = { ...this.logContext, function: this.handleUpdateJob.name };
     this.logger.debug({
@@ -196,7 +209,6 @@ export class JobSyncerManager {
     });
   }
 
-  @withSpanAsyncV4
   private async handleUpdateJobRejection(err: unknown, catalogMetadata: Pycsw3DCatalogRecord | null): Promise<void> {
     const logContext = { ...this.logContext, function: this.handleUpdateJobRejection.name };
     if (catalogMetadata?.id !== undefined) {
@@ -212,21 +224,6 @@ export class JobSyncerManager {
       });
       throw err;
     }
-  }
-
-  public async handleInProgressJobs(): Promise<boolean> {
-    const logContext = { ...this.logContext, function: this.handleInProgressJobs.name };
-
-    this.logger.debug({
-      msg: `Getting In-Progress jobs`,
-      logContext,
-    });
-    const jobs = await this.getInProgressJobs();
-    if (Array.isArray(jobs) && jobs.length > 0) {
-      await this.progressJobs(jobs);
-      return true;
-    }
-    return false;
   }
 
   private buildJobPayload(

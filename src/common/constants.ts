@@ -5,6 +5,9 @@ const packageJsonData = readPackageJsonSync();
 export const SERVICE_NAME = packageJsonData.name ?? 'unknown_service';
 export const SERVICE_VERSION = packageJsonData.version ?? 'unknown_version';
 
+export const IGNORED_OUTGOING_TRACE_ROUTES = [/^.*\/v1\/metrics.*$/];
+export const IGNORED_INCOMING_TRACE_ROUTES = [/^.*\/docs.*$/];
+
 export const NODE_VERSION = process.versions.node;
 
 export const INGESTION_JOB_TYPE = config.get<string>('jobManager.ingestion.jobType');

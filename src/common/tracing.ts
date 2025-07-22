@@ -1,21 +1,30 @@
-import config from 'config';
 import { Tracing } from '@map-colonies/telemetry';
-import { context } from '@opentelemetry/api';
-import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
-import { SEMRESATTRS_PROCESS_RUNTIME_NAME, SEMRESATTRS_PROCESS_RUNTIME_VERSION } from '@opentelemetry/semantic-conventions';
-import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
-import { NODE_VERSION } from './constants';
+import { IGNORED_INCOMING_TRACE_ROUTES, IGNORED_OUTGOING_TRACE_ROUTES } from './constants';
 
-const contextManager = new AsyncHooksContextManager();
-contextManager.enable();
-context.setGlobalContextManager(contextManager);
+let tracing: Tracing | undefined;
 
-export const tracing = new Tracing(
-  [new HttpInstrumentation({ requireParentforOutgoingSpans: true })],
-  {
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    '@opentelemetry/instrumentation-express': { enabled: false },
-  },
-  { [SEMRESATTRS_PROCESS_RUNTIME_NAME]: 'nodejs', [SEMRESATTRS_PROCESS_RUNTIME_VERSION]: NODE_VERSION },
-  config.get<string>('telemetry.logger.level').toLowerCase() === 'debug'
-);
+export function tracingFactory(options: ConstructorParameters<typeof Tracing>[0]): Tracing {
+  tracing = new Tracing({
+    ...options,
+    autoInstrumentationsConfigMap: {
+      '@opentelemetry/instrumentation-http': {
+        ignoreIncomingRequestHook: (request): boolean =>
+          IGNORED_INCOMING_TRACE_ROUTES.some((route) => request.url !== undefined && route.test(request.url)),
+        ignoreOutgoingRequestHook: (request): boolean =>
+          IGNORED_OUTGOING_TRACE_ROUTES.some((route) => typeof request.path === 'string' && route.test(request.path)),
+      },
+      '@opentelemetry/instrumentation-fs': {
+        requireParentSpan: true,
+      },
+    },
+  });
+
+  return tracing;
+}
+
+export function getTracing(): Tracing {
+  if (!tracing) {
+    throw new Error('tracing not initialized');
+  }
+  return tracing;
+}
