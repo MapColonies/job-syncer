@@ -1,0 +1,17 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: job-syncer
+  description: Service that handles 3D jobs finalization
+  annotations:
+    github.com/project-slug: MapColonies/job-syncer
+  tags:
+    - nodejs
+    - typescript
+    - expressjs
+    - ingestion
+spec:
+  type: service
+  lifecycle: production
+  owner: 3D
+  system: ingestion

@@ -3,7 +3,6 @@ import { inject, singleton } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
 import { IConfig } from 'config';
 import express, { Request, Response } from 'express';
-import { collectMetricsExpressMiddleware } from '@map-colonies/telemetry';
 import { Registry } from 'prom-client';
 import { StatusCodes } from 'http-status-codes';
 import { SERVICES } from './common/constants';

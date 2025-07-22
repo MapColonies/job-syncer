@@ -3,7 +3,7 @@ import { Logger } from '@map-colonies/js-logger';
 import { I3DCatalogUpsertRequestBody, Link, Pycsw3DCatalogRecord } from '@map-colonies/mc-model-types';
 import axios from 'axios';
 import { Tracer } from '@opentelemetry/api';
-import { withSpanAsyncV4 } from '@map-colonies/telemetry';
+import { withSpanAsync } from '@map-colonies/telemetry';
 import { StatusCodes } from 'http-status-codes';
 import { IConfig, IFindRecordsPayload, LogContext } from '../common/interfaces';
 import { IIngestionJobParameters } from '../jobSyncerManager/interfaces';
@@ -28,7 +28,7 @@ export class CatalogManager {
     };
   }
 
-  @withSpanAsyncV4
+  @withSpanAsync
   public async createCatalogMetadata(jobParameters: IIngestionJobParameters): Promise<Pycsw3DCatalogRecord> {
     const logContext = { ...this.logContext, function: this.createCatalogMetadata.name };
 
@@ -59,14 +59,14 @@ export class CatalogManager {
     return catalogMetadata.data;
   }
 
-  @withSpanAsyncV4
+  @withSpanAsync
   public async deleteCatalogMetadata(id: string): Promise<void> {
     this.logger.debug({ msg: 'Starting delete catalog record', modelId: id });
     await axios.delete(`${this.catalogUrl}/metadata/${id}`);
     this.logger.debug({ msg: 'Finishing deleteMetadata', id: id });
   }
 
-  @withSpanAsyncV4
+  @withSpanAsync
   public async findRecords(payload: IFindRecordsPayload): Promise<Pycsw3DCatalogRecord[]> {
     const logContext = { ...this.logContext, function: this.findRecords.name };
     this.logger.debug({
