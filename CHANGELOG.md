@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.6.0](https://github.com/MapColonies/job-syncer/compare/v2.5.0...v2.6.0) (2025-07-24)
+
+
+### Features
+
+* Add delete support (MAPCO-3749) ([#35](https://github.com/MapColonies/job-syncer/issues/35)) ([f21df28](https://github.com/MapColonies/job-syncer/commit/f21df2838fcb96d2aa4a7c587ac8db381165065b))
+
 ## [2.5.0](https://github.com/MapColonies/job-syncer/compare/v2.3.4...v2.5.0) (2025-04-06)
 
 
