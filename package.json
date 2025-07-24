@@ -41,7 +41,7 @@
   "dependencies": {
     "@map-colonies/js-logger": "^1.0.1",
     "@map-colonies/types": "^1.7.0",
-    "@map-colonies/mc-model-types": "^18.1.0",
+    "@map-colonies/mc-model-types": "^19.0.0",
     "@map-colonies/mc-priority-queue": "^8.2.1",
     "@map-colonies/read-pkg": "0.0.1",
     "@map-colonies/telemetry": "^6.1.0",
