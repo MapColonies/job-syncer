@@ -7,7 +7,8 @@ export const SERVICE_VERSION = packageJsonData.version ?? 'unknown_version';
 
 export const NODE_VERSION = process.versions.node;
 
-export const JOB_TYPE = config.get<string>('jobManager.jobType');
+export const INGESTION_JOB_TYPE = config.get<string>('jobManager.ingestion.jobType');
+export const DELETE_JOB_TYPE = config.get<string>('jobManager.delete.jobType');
 
 /* eslint-disable @typescript-eslint/naming-convention */
 export const SERVICES: Record<string, symbol> = {

@@ -31,7 +31,12 @@
   },
   "jobManager": {
     "url": "JOB_MANAGER_URL",
-    "jobType": "JOB_TYPE"
+    "ingestion": {
+      "jobType": "JOB_INGESTION_TYPE"
+    },
+    "delete": {
+      "jobType": "JOB_DELETE_TYPE"
+    }
   },
   "catalog": {
     "url": "CATALOG_URL",
