@@ -2,11 +2,10 @@ global:
   cloudProvider:
     dockerRegistryUrl: registry
     flavor: openshift
-    imagePullSecretName: 
+    imagePullSecretName:
   imagePullPolicy: IfNotPresent
   tracing: {}
   metrics: {}
-  environment: development
   
   jobManager:
     url:
@@ -17,25 +16,19 @@ global:
 
 cloudProvider:
     dockerRegistryUrl:
-    flavor: 
-    imagePullSecretName: 
-imagePullPolicy: 
-environment: 
+    flavor:
+    imagePullSecretName:
+imagePullPolicy:
 
 ca:
   enabled: false
   useExternal: false
-  secretName: 
-  path: 
-  key: 
-
-jobManager:
-  url: 
-  job:
-    type: 
+  secretName:
+  path:
+  key:
 
 replicaCount: 1
-revisionHistoryLimit: 5 # Amount of revisions we keep
+revisionHistoryLimit: 5    # Amount of revisions we keep
 
 image:
   repository: job-syncer
@@ -48,6 +41,14 @@ extraVolumeMounts: {}
 sidecars: {}
 
 podAnnotations: {}
+
+mcLabelsAndAnnotations:
+    component: backend
+    partOf: ingestion
+    owner: 3d
+    gisDomain: 3d
+    prometheus:
+      enabled: true
 
 env:
   targetPort: 8080
@@ -66,7 +67,7 @@ env:
       name: ''
       description: ''
       protocol: 3D_LAYER
-      url: 
+      url:
 
 resources:
   enabled: true
