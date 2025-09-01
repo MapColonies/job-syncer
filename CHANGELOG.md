@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.6.1](https://github.com/MapColonies/job-syncer/compare/v2.6.0...v2.6.1) (2025-08-28)
+
+
+### Helm Changes
+
+* add mc labels and annotations package (MAPCO-8562) ([#38](https://github.com/MapColonies/job-syncer/issues/38)) ([c5b6c15](https://github.com/MapColonies/job-syncer/commit/c5b6c15c05a29b5e2b761b7bc4fd96509d57df34))
+
 ## [2.6.0](https://github.com/MapColonies/job-syncer/compare/v2.5.0...v2.6.0) (2025-07-24)
 
 
