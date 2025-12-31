@@ -32,7 +32,7 @@ revisionHistoryLimit: 5    # Amount of revisions we keep
 
 image:
   repository: job-syncer
-  tag: latest
+  tag: v2.6.1
 
 extraVolumes: {}
 
