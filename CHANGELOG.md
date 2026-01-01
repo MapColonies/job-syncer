@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.6.2](https://github.com/MapColonies/job-syncer/compare/v2.6.1...v2.6.2) (2026-01-01)
+
+
+### Bug Fixes
+
+* bump 3d-job-syncer image to v2.6.1 (MAPCO-9268) ([#40](https://github.com/MapColonies/job-syncer/issues/40)) ([23db496](https://github.com/MapColonies/job-syncer/commit/23db49607b0492be31c97cc46e0e20c73610e2e6))
+
 ## [2.6.1](https://github.com/MapColonies/job-syncer/compare/v2.6.0...v2.6.1) (2025-08-28)
 
 
