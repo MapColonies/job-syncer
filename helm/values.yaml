@@ -52,7 +52,7 @@ mcLabelsAndAnnotations:
       enabled: true
 
 env:
-  targetPort: 8080 
+  targetPort: 8080
   logLevel: info
   logPrettyPrintEnabled: false
   tracing:
