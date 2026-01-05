@@ -1,6 +1,6 @@
 {
   "name": "job-syncer",
-  "version": "2.6.2",
+  "version": "2.6.3",
   "description": "This is template for map colonies typescript service",
   "main": "./src/index.ts",
   "scripts": {

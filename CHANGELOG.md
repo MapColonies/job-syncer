@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.6.3](https://github.com/MapColonies/job-syncer/compare/v2.6.2...v2.6.3) (2026-01-05)
+
+
+### Helm Changes
+
+* added podAnnotations and changed protocol to be 3DTiles ([#44](https://github.com/MapColonies/job-syncer/issues/44)) ([3c4b092](https://github.com/MapColonies/job-syncer/commit/3c4b092bf67f611b79884bb3f9990150a09f397e))
+
 ## [2.6.2](https://github.com/MapColonies/job-syncer/compare/v2.6.1...v2.6.2) (2026-01-01)
 
 
