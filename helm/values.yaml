@@ -40,7 +40,8 @@ extraVolumeMounts: {}
 
 sidecars: {}
 
-podAnnotations: {}
+podAnnotations:
+  prometheus.io/port: 8080
 
 mcLabelsAndAnnotations:
     component: backend
@@ -66,7 +67,7 @@ env:
     link:
       name: ''
       description: ''
-      protocol: 3D_LAYER
+      protocol: 3DTiles
       url:
 
 resources:
