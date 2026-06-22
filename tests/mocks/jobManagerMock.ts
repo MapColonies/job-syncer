@@ -18,7 +18,7 @@ export const createIngestionJobParameters = (): IIngestionJobParameters => {
   return {
     metadata: {
       productId: 'productIdTest',
-      productType: ProductType.PHOTO_REALISTIC,
+      productType: ProductType.PHOTO_REALISTIC_3D,
     } as Layer3DMetadata,
     modelId: faker.string.uuid(),
     tilesetFilename: faker.string.uuid(),
