@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.7.0](https://github.com/MapColonies/job-syncer/compare/v2.6.3...v2.7.0) (2026-06-22)
+
+
+### Features
+
+* added new type of productSubType and values to productType (MAPCO-10806) ([#46](https://github.com/MapColonies/job-syncer/issues/46)) ([39821d5](https://github.com/MapColonies/job-syncer/commit/39821d51af49ff021856b5f4f2d02f8fec2e9801))
+
+
+### Helm Changes
+
+* upgrade to the latest mc-labels ([#48](https://github.com/MapColonies/job-syncer/issues/48)) ([f9a9b7c](https://github.com/MapColonies/job-syncer/commit/f9a9b7cb92f4654c8c14b80f64624bfc0fc5f80a))
+
 ## [2.6.3](https://github.com/MapColonies/job-syncer/compare/v2.6.2...v2.6.3) (2026-01-05)
 
 
