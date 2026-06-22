@@ -43,7 +43,7 @@ sidecars: {}
 podAnnotations:
   prometheus.io/port: 8080
 
-mcLabelsAndAnnotations:
+mclabels:
     component: backend
     partOf: ingestion
     owner: 3d
